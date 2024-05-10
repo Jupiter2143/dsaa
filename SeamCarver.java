@@ -228,7 +228,40 @@ public class SeamCarver {
 
   public void operate(int op) {
     switch (op) {
+      case XADD -> {
+        if (picture.width() >= originPicture.width()) {
+          strech(true);
+        } else {
+          undoCompress(true);
+        }
+      }
+      case YADD -> {
+        if (picture.height() >= originPicture.height()) {
+          strech(false);
+        } else {
+          undoCompress(false);
+        }
+      }
+      case XSUB -> {
+        if (picture.width() <= originPicture.width()) {
+          compress(true);
+        } else {
+          undoStrech(true);
+        }
+      }
+      case YSUB -> {
+        if (picture.height() >= originPicture.height()) {
+          compress(false);
+        } else {
+          undoStrech(false);
+        }
+      }
     }
+    undoStack.push(op);
+    if (undoStack.size() > 50) {
+      undoStack.remove(0);
+    }
+    redoStack.clear();
   }
 
   public void undo() {}
