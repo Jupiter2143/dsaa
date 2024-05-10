@@ -221,7 +221,45 @@ public class SeamCarver {
   public void undoCompress(boolean direction) {}
 
   // true for horizontal, false for vertical
-  public void compress(boolean direction) {}
+  public void compress(boolean direction) {
+    if (!direction){
+            if (!VseamsStack.isEmpty()) {
+                int[] seam = VseamsStack.pop();
+
+                // 将 seam 对应 originImage 的像素点插入到 currentImage 的相应位置
+                Picture newPicture = new Picture(picture.width() - 1, picture.height());
+                for (int y = 0; y < picture.height(); y++) {
+                    int newX = 0;
+                    for (int x = 0; x < picture.width(); x++) {
+                        if (seam[x] == 0) {
+                            newPicture.set(newX++, y, picture.get(x, y));
+                        } else {
+                            newPicture.set(newX, y, originPicture.get(x, y)); // 插入 originImage 的像素点
+                        }
+                    }
+                }
+                picture = newPicture;
+            }
+        }else{
+            if (!HseamsStack.isEmpty()) {
+                int[] seam = HseamsStack.pop();
+
+                // 将 seam 对应 originImage 的像素点插入到 currentImage 的相应位置
+                Picture newPicture = new Picture(picture.width(), picture.height()-1);
+                for (int y = 0; y < picture.height(); y++) {
+                    int newY = 0;
+                    for (int x = 0; x < picture.width(); x++) {
+                        if (seam[y] == 0) {
+                            newPicture.set(x, newY++, picture.get(x, y));
+                        } else {
+                            newPicture.set(x, newY, originPicture.get(x, y)); // 插入 originImage 的像素点
+                        }
+                    }
+                }
+                picture = newPicture;
+            }
+        }
+  }
 
   // true for horizontal, false for vertical
   public void undoStrech(boolean direction) {}
@@ -325,42 +363,42 @@ public class SeamCarver {
   // }
 
   // remove horizontal seam from current picture
-  // public void removeHorizontalSeam(int[] seam) {
-  //   Picture newPicture = new Picture(this.width(), this.height() - 1);
+  public void removeHorizontalSeam(int[] seam) {
+    Picture newPicture = new Picture(this.width(), this.height() - 1);
 
-  //   int prevSeam = seam[0];
-  //   for (int x = 0; x < this.width(); x++) {
-  //     prevSeam = seam[x];
-  //     for (int y = 0; y < this.height(); y++) {
-  //       if (seam[x] == y) continue;
+    int prevSeam = seam[0];
+    for (int x = 0; x < this.width(); x++) {
+      prevSeam = seam[x];
+      for (int y = 0; y < this.height(); y++) {
+        if (seam[x] == y) continue;
 
-  //       Color color = this.picture.get(x, y);
-  //       newPicture.set(x, seam[x] > y ? y : y - 1, color);
-  //     }
-  //   }
+        Color color = this.picture.get(x, y);
+        newPicture.set(x, seam[x] > y ? y : y - 1, color);
+      }
+    }
 
-  //   this.picture = newPicture;
-  //   calEnergyMap();
-  // }
+    this.picture = newPicture;
+    calEnergyMap();
+  }
 
   // // remove vertical seam from current picture
-  // public void removeVerticalSeam(int[] seam) {
-  //   Picture newPicture = new Picture(this.width(), this.height() - 1);
+  public void removeVerticalSeam(int[] seam) {
+    Picture newPicture = new Picture(this.width(), this.height() - 1);
 
-  //   int prevSeam = seam[0];
-  //   for (int y = 0; y < this.width(); y++) {
-  //     prevSeam = seam[y];
-  //     for (int x = 0; x < this.width(); x++) {
-  //       if (seam[y] == x) continue;
+    int prevSeam = seam[0];
+    for (int y = 0; y < this.width(); y++) {
+      prevSeam = seam[y];
+      for (int x = 0; x < this.width(); x++) {
+        if (seam[y] == x) continue;
 
-  //       Color color = this.picture.get(x, y);
-  //       newPicture.set(seam[y] > x ? x : x - 1, y, color);
-  //     }
-  //   }
+        Color color = this.picture.get(x, y);
+        newPicture.set(seam[y] > x ? x : x - 1, y, color);
+      }
+    }
 
-  //   this.picture = newPicture;
-  //   calEnergyMap();
-  // }
+    this.picture = newPicture;
+    calEnergyMap();
+  }
 
   // unit testing (optional)
   public static void main(String[] args) {
