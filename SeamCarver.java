@@ -218,15 +218,12 @@ public class SeamCarver {
   public void strech(boolean direction) {}
 
   // true for horizontal, false for vertical
-  public void undoCompress(boolean direction) {}
-
-  // true for horizontal, false for vertical
-  public void compress(boolean direction) {
+  public void undoCompress(boolean direction) {
     if (!direction){
             if (!VseamsStack.isEmpty()) {
                 int[] seam = VseamsStack.pop();
 
-                // 将 seam 对应 originImage 的像素点插入到 currentImage 的相应位置
+                // Insert pixels corresponding to seam from originImage into corresponding positions of currentImage
                 Picture newPicture = new Picture(picture.width() - 1, picture.height());
                 for (int y = 0; y < picture.height(); y++) {
                     int newX = 0;
@@ -234,7 +231,7 @@ public class SeamCarver {
                         if (seam[x] == 0) {
                             newPicture.set(newX++, y, picture.get(x, y));
                         } else {
-                            newPicture.set(newX, y, originPicture.get(x, y)); // 插入 originImage 的像素点
+                            newPicture.set(newX, y, originPicture.get(x, y)); // Insert pixels from originImage
                         }
                     }
                 }
@@ -244,7 +241,7 @@ public class SeamCarver {
             if (!HseamsStack.isEmpty()) {
                 int[] seam = HseamsStack.pop();
 
-                // 将 seam 对应 originImage 的像素点插入到 currentImage 的相应位置
+               // Insert pixels corresponding to seam from originImage into corresponding positions of currentImage
                 Picture newPicture = new Picture(picture.width(), picture.height()-1);
                 for (int y = 0; y < picture.height(); y++) {
                     int newY = 0;
@@ -252,13 +249,18 @@ public class SeamCarver {
                         if (seam[y] == 0) {
                             newPicture.set(x, newY++, picture.get(x, y));
                         } else {
-                            newPicture.set(x, newY, originPicture.get(x, y)); // 插入 originImage 的像素点
+                            newPicture.set(x, newY, originPicture.get(x, y)); /// Insert pixels from originImage
                         }
                     }
                 }
                 picture = newPicture;
             }
         }
+  }
+
+  // true for horizontal, false for vertical
+  public void compress(boolean direction) {
+    
   }
 
   // true for horizontal, false for vertical
