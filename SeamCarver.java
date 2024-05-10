@@ -260,7 +260,43 @@ public class SeamCarver {
 
   // true for horizontal, false for vertical
   public void compress(boolean direction) {
-    
+    if (direction){
+            calEnergyMap();
+            calHcost();
+            int[] seam = findHseam(1);
+
+            // Remove pixels corresponding to seam from currentImage
+            Picture newPicture = new Picture(picture.width() - 1, picture.height());
+            for (int y = 0; y < picture.height(); y++) {
+                int newX = 0;
+                for (int x = 0; x < picture.width(); x++) {
+                    if (seam[y] != x) {
+                        newPicture.set(newX++, y, picture.get(x, y));
+                    }
+                }
+            }
+            picture = newPicture;
+
+            VseamsStack.push(seam);
+        }else{
+            calEnergyMap();
+            calVcost();
+            int[] seam = findVseam(1);
+
+            // Remove pixels corresponding to seam from currentImage
+            Picture newPicture = new Picture(picture.width() , picture.height()-1);
+            for (int y = 0; y < picture.height(); y++) {
+                int newY = 0;
+                for (int x = 0; x < picture.width(); x++) {
+                    if (seam[x] != y) {
+                        newPicture.set(x, newY++, picture.get(x, y));
+                    }
+                }
+            }
+            picture = newPicture;
+
+            HseamsStack.push(seam);
+        }
   }
 
   // true for horizontal, false for vertical
@@ -365,42 +401,42 @@ public class SeamCarver {
   // }
 
   // remove horizontal seam from current picture
-  public void removeHorizontalSeam(int[] seam) {
-    Picture newPicture = new Picture(this.width(), this.height() - 1);
+  // public void removeHorizontalSeam(int[] seam) {
+  //   Picture newPicture = new Picture(this.width(), this.height() - 1);
 
-    int prevSeam = seam[0];
-    for (int x = 0; x < this.width(); x++) {
-      prevSeam = seam[x];
-      for (int y = 0; y < this.height(); y++) {
-        if (seam[x] == y) continue;
+  //   int prevSeam = seam[0];
+  //   for (int x = 0; x < this.width(); x++) {
+  //     prevSeam = seam[x];
+  //     for (int y = 0; y < this.height(); y++) {
+  //       if (seam[x] == y) continue;
 
-        Color color = this.picture.get(x, y);
-        newPicture.set(x, seam[x] > y ? y : y - 1, color);
-      }
-    }
+  //       Color color = this.picture.get(x, y);
+  //       newPicture.set(x, seam[x] > y ? y : y - 1, color);
+  //     }
+  //   }
 
-    this.picture = newPicture;
-    calEnergyMap();
-  }
+  //   this.picture = newPicture;
+  //   calEnergyMap();
+  // }
 
-  // // remove vertical seam from current picture
-  public void removeVerticalSeam(int[] seam) {
-    Picture newPicture = new Picture(this.width(), this.height() - 1);
+  // // // remove vertical seam from current picture
+  // public void removeVerticalSeam(int[] seam) {
+  //   Picture newPicture = new Picture(this.width(), this.height() - 1);
 
-    int prevSeam = seam[0];
-    for (int y = 0; y < this.width(); y++) {
-      prevSeam = seam[y];
-      for (int x = 0; x < this.width(); x++) {
-        if (seam[y] == x) continue;
+  //   int prevSeam = seam[0];
+  //   for (int y = 0; y < this.width(); y++) {
+  //     prevSeam = seam[y];
+  //     for (int x = 0; x < this.width(); x++) {
+  //       if (seam[y] == x) continue;
 
-        Color color = this.picture.get(x, y);
-        newPicture.set(seam[y] > x ? x : x - 1, y, color);
-      }
-    }
+  //       Color color = this.picture.get(x, y);
+  //       newPicture.set(seam[y] > x ? x : x - 1, y, color);
+  //     }
+  //   }
 
-    this.picture = newPicture;
-    calEnergyMap();
-  }
+  //   this.picture = newPicture;
+  //   calEnergyMap();
+  // }
 
   // unit testing (optional)
   public static void main(String[] args) {
