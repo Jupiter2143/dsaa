@@ -16,7 +16,8 @@ public class SeamCarver {
       new Stack<>(); // true for horizontal, false for vertical
   // The following operations are not the real operations, the real operations
   // are: x-1, x+1, y-1, y+1
-  private final Stack<Boolean> operateHistory = new Stack<>(); // true for reduce, false for enlarge
+  private final Stack<Boolean> operateHistory =
+      new Stack<>(); // true for enlarege, false for reduce
 
   // create a seam carver object based on the given picture
   public SeamCarver(Picture picture) {
