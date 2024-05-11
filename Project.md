@@ -38,12 +38,13 @@
 ## 会议
 
 - [ ] 后端，前端思路
+  - [ ] 每一个变量的含义以及内容
 - [ ] 信息同步
-  + git使用
+  + [ ] git使用
 - [ ] 重新分配ddl
 - [ ] 现有的小问题
-  + 终端共享
-  + 代码：removeHorizontalSeam不需要calEnergyMap();
+  + [ ] 终端共享
+  + [ ] 代码：removeHorizontalSeam不需要calEnergyMap();
 - [ ] 预估dilemma
 - [ ] 分工
 
@@ -83,10 +84,10 @@ eg: `public static int XADD=0b00;`
 
 1. `x+1`，判断current image和origin image的width
    + 如果大于等于，则进行`strech`操作：选择`Vseams`中的第`currentImageWidth-OriginImageWidth+1`条seam，对current image进行线性插值，即在seam对应的像素点右侧插入新的像素
-   + 如果小于，则进行`undoCompress`操作：`VseamsStack.pop()`后将`seam`对应`originImage`的像素点插入到`currentImage`的相应位置
+   + 如果小于，则进行`undoCompress`操作：`VseamsStack.pop()`后将`seam`对应`currentImage`右侧插入`VseamsColorStack.pop()`中的像素点
 2. `y+1`类似
 3. `x-1`，判断current image和origin image
-   + 如果小于等于，则进行`Compress`操作：更新当前的`energyMap`并重新计算`Hcost`数组，执行`findHorizontalSeam(1)`计算能量最小的`seam`，然后将`seam`对应`currentImage`的像素点删除，最后`Vseams.push(seam)`
+   + 如果小于等于，则进行`Compress`操作：更新当前的`energyMap`并重新计算`Hcost`数组，执行`findHorizontalSeam(1)`计算能量最小的`seam`，然后将`seam`对应`currentImage`的像素点删除，将删除的像素点放在数组`colors`，并push到`VseamsColorStack`，最后`VseamsStack.push(seam)`
    + 如果大于，则进行`undoStrech`操作：选择`Vseams`中第`currentImageWidth-OriginImageWidth`条seam，将`seam`对应`currentImage`右侧的像素点删除
 4. `y-1`类似
 

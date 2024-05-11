@@ -14,6 +14,8 @@ public class SeamCarver {
   private int[] Hseams;
   private final Stack<int[]> VseamsStack = new Stack<>();
   private final Stack<int[]> HseamsStack = new Stack<>();
+  private final Stack<Color[]> VseamsColorStack = new Stack<>();
+  private final Stack<Color[]> HseamsColorStack = new Stack<>();
   // private final Stack<int[]> seamHistory = new Stack<>();
   // private final Stack<Boolean> seamDirection =
   //     new Stack<>();
@@ -216,79 +218,63 @@ public class SeamCarver {
 
   // true for horizontal, false for vertical
   public void strech(boolean direction) {
-    if (!direction) {
-      int targetSeams = picture.width() - originPicture.width() + 1;
-      while (targetSeams > 0 && !VseamsStack.isEmpty()) {
-        int[] seam = VseamsStack.pop();
-        targetSeams--; // seam->1
+    if (direction) {
+      int cW = picture.width();
+      int cH = picture.height();
+      int oW = originPicture.width();
+      int oH = originPicture.height();
+      int i = cW - oW;
+      int[] seam = Arrays.copyOfRange(Vseams, i * oH, (i + 1) * oH);
 
-        // Perform linear interpolation on current image, i.e., insert new pixels to the right of
-        // pixels corresponding to seam
-        Picture newPicture = new Picture(picture.width() + 1, picture.height());
-        for (int y = 0; y < picture.height(); y++) {
-          int newX = 0;
-          for (int x = 0; x < picture.width(); x++) {
-            newPicture.set(newX++, y, picture.get(x, y));
-            if (seam[x] == 1) {
-              // Insert new pixels
-              Color leftPixel = picture.get(x, y);
-              Color rightPixel = picture.get(x + 1, y);
-              int avgRed = (leftPixel.getRed() + rightPixel.getRed()) / 2;
-              int avgGreen = (leftPixel.getGreen() + rightPixel.getGreen()) / 2;
-              int avgBlue = (leftPixel.getBlue() + rightPixel.getBlue()) / 2;
-              Color avgColor = new Color(avgRed, avgGreen, avgBlue);
-              newPicture.set(newX++, y, avgColor);
-            }
-          }
-        }
-        picture = newPicture;
-      }
+      Picture newPicture = new Picture(picture.width() + 1, picture.height());
+      // int targetSeams = picture.width() - originPicture.width() + 1;
+      // while (targetSeams > 0 && !VseamsStack.isEmpty()) {
+      //   int[] seam = VseamsStack.pop();
+      //   targetSeams--; // seam->1
+
+      //   // Perform linear interpolation on current image, i.e., insert new pixels to the right of
+      //   // pixels corresponding to seam
+      //   Picture newPicture = new Picture(picture.width() + 1, picture.height());
+      //   for (int y = 0; y < picture.height(); y++) {
+      //     int newX = 0;
+      //     for (int x = 0; x < picture.width(); x++) {
+      //       newPicture.set(newX++, y, picture.get(x, y));
+      //       if (seam[x] == 1) {
+      //         // Insert new pixels
+      //         Color leftPixel = picture.get(x, y);
+      //         Color rightPixel = picture.get(x + 1, y);
+      //         int avgRed = (leftPixel.getRed() + rightPixel.getRed()) / 2;
+      //         int avgGreen = (leftPixel.getGreen() + rightPixel.getGreen()) / 2;
+      //         int avgBlue = (leftPixel.getBlue() + rightPixel.getBlue()) / 2;
+      //         Color avgColor = new Color(avgRed, avgGreen, avgBlue);
+      //         newPicture.set(newX++, y, avgColor);
+      //       }
+      //     }
+      //   }
+      // picture = newPicture;
     } else {
-      int targetSeams = picture.height() - originPicture.height() + 1;
-      while (targetSeams > 0 && !HseamsStack.isEmpty()) {
-        int[] seam = HseamsStack.pop();
-        targetSeams--; // seam->1
-
-        // Perform linear interpolation on current image, i.e., insert new pixels to the right of
-        // pixels corresponding to seam
-        Picture newPicture = new Picture(picture.width(), picture.height() + 1);
-        for (int x = 0; x < picture.width(); x++) {
-          int newY = 0;
-          for (int y = 0; y < picture.height(); y++) {
-            newPicture.set(x, newY++, picture.get(x, y));
-            if (seam[y] == 1) {
-              // Insert new pixels
-              Color leftPixel = picture.get(x, y);
-              Color rightPixel = picture.get(x, y + 1);
-              int avgRed = (leftPixel.getRed() + rightPixel.getRed()) / 2;
-              int avgGreen = (leftPixel.getGreen() + rightPixel.getGreen()) / 2;
-              int avgBlue = (leftPixel.getBlue() + rightPixel.getBlue()) / 2;
-              Color avgColor = new Color(avgRed, avgGreen, avgBlue);
-              newPicture.set(x, newY++, avgColor);
-            }
-          }
-        }
-        picture = newPicture;
-      }
     }
   }
 
   // true for horizontal, false for vertical
   public void undoCompress(boolean direction) {
-    if (!direction) {
+    if (direction) {
       if (!VseamsStack.isEmpty()) {
         int[] seam = VseamsStack.pop();
+        Color[] colors = VseamsColorStack.pop();
 
         // Insert pixels corresponding to seam from originImage into corresponding positions of
         // currentImage
-        Picture newPicture = new Picture(picture.width() - 1, picture.height());
+        Picture newPicture = new Picture(picture.width() + 1, picture.height());
         for (int y = 0; y < picture.height(); y++) {
-          int newX = 0;
           for (int x = 0; x < picture.width(); x++) {
-            if (seam[x] == 0) {
-              newPicture.set(newX++, y, picture.get(x, y));
+            if (x < seam[y]) {
+              newPicture.set(x, y, picture.get(x, y));
+            } else if (x == seam[y]) {
+              newPicture.set(x, y, colors[y]);
+              newPicture.set(x + 1, y, picture.get(x, y));
             } else {
-              newPicture.set(newX, y, originPicture.get(x, y)); // Insert pixels from originImage
+              newPicture.set(x + 1, y, picture.get(x, y));
             }
           }
         }
@@ -297,17 +283,20 @@ public class SeamCarver {
     } else {
       if (!HseamsStack.isEmpty()) {
         int[] seam = HseamsStack.pop();
+        Color[] colors = HseamsColorStack.pop();
 
         // Insert pixels corresponding to seam from originImage into corresponding positions of
         // currentImage
-        Picture newPicture = new Picture(picture.width(), picture.height() - 1);
+        Picture newPicture = new Picture(picture.width(), picture.height() + 1);
         for (int x = 0; x < picture.width(); x++) {
-          int newY = 0;
           for (int y = 0; y < picture.height(); y++) {
-            if (seam[y] == 0) {
-              newPicture.set(x, newY++, picture.get(x, y));
+            if (y < seam[x]) {
+              newPicture.set(x, y, picture.get(x, y));
+            } else if (y == seam[x]) {
+              newPicture.set(x, y, colors[x]);
+              newPicture.set(x, y + 1, picture.get(x, y));
             } else {
-              newPicture.set(x, newY, originPicture.get(x, y)); // / Insert pixels from originImage
+              newPicture.set(x, y + 1, picture.get(x, y));
             }
           }
         }
@@ -320,39 +309,47 @@ public class SeamCarver {
   public void compress(boolean direction) {
     if (direction) {
       calEnergyMap();
-      calHcost();
-      int[] seam = findHseam(1);
-
-      // Remove pixels corresponding to seam from currentImage
-      Picture newPicture = new Picture(picture.width() - 1, picture.height());
-      for (int y = 0; y < picture.height(); y++) {
-        int newX = 0;
-        for (int x = 0; x < picture.width(); x++) {
-          if (seam[y] != x) {
-            newPicture.set(newX++, y, picture.get(x, y));
-          }
-        }
-      }
-      picture = newPicture;
-
-      VseamsStack.push(seam);
-    } else {
-      calEnergyMap();
       calVcost();
       int[] seam = findVseam(1);
 
       // Remove pixels corresponding to seam from currentImage
-      Picture newPicture = new Picture(picture.width(), picture.height() - 1);
-      for (int x = 0; x < picture.width(); x++) {
-        int newY = 0;
-        for (int y = 0; y < picture.height(); y++) {
-          if (seam[x] != y) {
-            newPicture.set(x, newY++, picture.get(x, y));
+      Color[] colors = new Color[picture.height()];
+      Picture newPicture = new Picture(picture.width() - 1, picture.height());
+      for (int y = 0; y < picture.height(); y++) {
+        for (int x = 0; x < picture.width(); x++) {
+          if (x < seam[y]) {
+            newPicture.set(x, y, picture.get(x, y));
+          } else if (x > seam[y]) {
+            newPicture.set(x - 1, y, picture.get(x, y));
+          } else {
+            colors[y] = picture.get(x, y);
           }
         }
       }
       picture = newPicture;
+      VseamsColorStack.push(colors);
+      VseamsStack.push(seam);
+    } else {
+      calEnergyMap();
+      calHcost();
+      int[] seam = findHseam(1);
 
+      // Remove pixels corresponding to seam from currentImage
+      Color[] colors = new Color[picture.width()];
+      Picture newPicture = new Picture(picture.width(), picture.height() - 1);
+      for (int x = 0; x < picture.width(); x++) {
+        for (int y = 0; y < picture.height(); y++) {
+          if (y < seam[x]) {
+            newPicture.set(x, y, picture.get(x, y));
+          } else if (y > seam[x]) {
+            newPicture.set(x, y - 1, picture.get(x, y));
+          } else {
+            colors[x] = picture.get(x, y);
+          }
+        }
+      }
+      picture = newPicture;
+      HseamsColorStack.push(colors);
       HseamsStack.push(seam);
     }
   }
