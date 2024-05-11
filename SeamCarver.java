@@ -1,6 +1,6 @@
 import edu.princeton.cs.algs4.Picture;
 import java.awt.Color;
-// import edu.princeton.cs.algs4.StdOut;8888
+// import edu.princeton.cs.algs4.StdOut;777
 import java.util.PriorityQueue;
 import java.util.Stack;
 
