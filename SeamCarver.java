@@ -294,8 +294,12 @@ public class SeamCarver {
           if (x < seam[y]) {
             newPicture.set(x, y, picture.get(x, y));
           } else if (x == seam[y]) {
-            // Insert new pixels
-            Color leftPixel = picture.get(x - 1, y);
+            Color leftPixel;
+            if (x == 0) {
+              leftPixel = picture.get(x, y);
+            } else {
+              leftPixel = picture.get(x - 1, y);
+            }
             Color rightPixel = picture.get(x, y);
             int avgRed = (leftPixel.getRed() + rightPixel.getRed()) / 2;
             int avgGreen = (leftPixel.getGreen() + rightPixel.getGreen()) / 2;
@@ -319,8 +323,12 @@ public class SeamCarver {
           if (y < seam[x]) {
             newPicture.set(x, y, picture.get(x, y));
           } else if (y == seam[x]) {
-            // Insert new pixels
-            Color topPixel = picture.get(x, y - 1);
+            Color topPixel;
+            if (y == 0) {
+              topPixel = picture.get(x, y);
+            } else {
+              topPixel = picture.get(x, y - 1);
+            }
             Color bottomPixel = picture.get(x, y);
             int avgRed = (topPixel.getRed() + bottomPixel.getRed()) / 2;
             int avgGreen = (topPixel.getGreen() + bottomPixel.getGreen()) / 2;
