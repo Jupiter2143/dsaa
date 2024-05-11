@@ -50,13 +50,19 @@
 
 ## 后端思路
 
+### 辅助函数
+
+`direction`是`seam`的方向
+
+1. `void insertPixels(boolean direction, int[] seam, Color[] pixels, )`在seam左侧插入pixels
+2. `Color[] removePixels(boolean direction, int[] seam)`
+
 ### 初始化
 
 前端上传图片后，进行初始化
 
 1. `void calEnergyMap()`
-
-   + `double deltaSquare()`
++ `double deltaSquare()`
 2. `void calVcost(),`; `void calHcost()`
 
    + `int minIndex()`
@@ -66,26 +72,30 @@
 
 前端传来的操作：`x+1`, `y+1`, `x-1`, `y-1`，
 
-函数原型：`do(op)`
-
-直接传入到`operate(op)`函数
-
-最后将操作数push到大小为50的`undoStack`中，清空`redoStack`
-
-
-
 `void operate(int op)`函数如下
 
 每个操作数对应一个二进制数编码：00，01，11，10
 
 eg: `public static int XADD=0b00;`
 
-1. `x+1`，`strech`函数：更新当前的`energyMap`并重新计算`Vcost`数组，执行`findVSeam(HstrechLog*2+1)`，对`currentImage`进行线性插值，即在`seam`对应的像素点右侧插入新的像素，最后`seamsHistory.push(seam)`，`HstrechLog+=1`
+1. `x+1`，`strech`函数：
+
+   update`energyMap`, update`Vcost`, `int[] seam=findVseam(HstrechLog*2+1)`
+   在`seam`对应的像素点左侧线性插值
+   最后`undoSeamsStack.push(seam)`，`HstrechLog+=1`
+
 2. `y+1`类似
-3. `x-1`，`compress`函数：更新当前的`energyMap`并重新计算`Vcost`数组，执行`findVSeam(1)`计算能量最小的`seam`，然后将`seam`对应`currentImage`的像素点删除，将删除的像素点放在数组`colors`，并push到`ColorStack`，最后`seamsHistory.push(seam)`，`HstrechLog=0`
+
+3. `x-1`，`compress`函数：
+
+   update`energyMap`, update`Vcost`, `int[] seam=findVseam(1)`
+   `pixels=removePixels(false,seam)`
+
+   最后`undoSeamsStack.push(seam)`，`undoPixelsStack.push(pixels)`，`HstrechLog=0`
+
 4. `y-1`类似
 
-
+最后`undoStack.push(op)`，清空`redoStack`，`redoSeamsStack`，`redoPixelsStack`
 
 ### Undo&Redo
 
@@ -94,19 +104,39 @@ eg: `public static int XADD=0b00;`
 `op=undoStack.pop()`后判断：
 
 1. `x+1`，`undoStrech`函数：
+   `seam=undoSeamsStack.pop`, `pixels=removePixels(false, seam)`
+   最后`redoSeamsStack.push(seam)`, `redoPixelsStack.push(pixels)`
 2. `y+1`类似
 3. `x-1`，`undoCompress`函数：
+   `seam=undoSeamsStack.pop`, `pixels=undoPixelsStack.pop`, 
+   ` insertPixels(false,seam,pixels)`
+   最后`redoSeamsStack.push(seam)`，`redoPixelsStack.push(pixels)`
 4. `y-1`类似
 
-> `int op=~undoStack.pop()&0b11`将栈弹出的op取反
->
-> `operate(op)`执行
->
-> `redoStack.push(op)`存储op
+最后`redoStack.push(op)`
+
+
 
 前端传来的操作：`redo`
 
-`op=redoStack.pop()`后执行`operate(op)`
+`op=redoStack.pop()`后判断：
+
+1. `x+1`，`redoStrech`函数：
+
+   `seam=redoSeamsStack.pop`, `pixels=redoPixelsStack.pop`, 
+   ` insertPixels(false,seam,pixel)`
+   最后`undoSeamsStack.push(seam)`，`undoPixelsStack.push(pixels)`
+
+2. `y+1`类似
+
+3. `x-1`，`redoCompress`函数：
+
+   `seam=redoSeamsStack.pop`, `pixels=removePixels(false, seam)`
+   最后`undoSeamsStack.push(seam)`, `undoPixelsStack.push(pixels)`
+
+4. `y-1`类似
+
+> 整合`undo`和`redo`相关函数
 
 ## 前端思路
 
