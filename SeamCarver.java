@@ -215,92 +215,192 @@ public class SeamCarver {
   }
 
   // true for horizontal, false for vertical
-  public void strech(boolean direction) {}
+  public void strech(boolean direction) {
+    if (!direction) {
+      int targetSeams = picture.width() - originPicture.width() + 1;
+      while (targetSeams > 0 && !VseamsStack.isEmpty()) {
+        int[] seam = VseamsStack.pop();
+        targetSeams--; // seam->1
+
+        // Perform linear interpolation on current image, i.e., insert new pixels to the right of
+        // pixels corresponding to seam
+        Picture newPicture = new Picture(picture.width() + 1, picture.height());
+        for (int y = 0; y < picture.height(); y++) {
+          int newX = 0;
+          for (int x = 0; x < picture.width(); x++) {
+            newPicture.set(newX++, y, picture.get(x, y));
+            if (seam[x] == 1) {
+              // Insert new pixels
+              Color leftPixel = picture.get(x, y);
+              Color rightPixel = picture.get(x + 1, y);
+              int avgRed = (leftPixel.getRed() + rightPixel.getRed()) / 2;
+              int avgGreen = (leftPixel.getGreen() + rightPixel.getGreen()) / 2;
+              int avgBlue = (leftPixel.getBlue() + rightPixel.getBlue()) / 2;
+              Color avgColor = new Color(avgRed, avgGreen, avgBlue);
+              newPicture.set(newX++, y, avgColor);
+            }
+          }
+        }
+        picture = newPicture;
+      }
+    } else {
+      int targetSeams = picture.height() - originPicture.height() + 1;
+      while (targetSeams > 0 && !HseamsStack.isEmpty()) {
+        int[] seam = HseamsStack.pop();
+        targetSeams--; // seam->1
+
+        // Perform linear interpolation on current image, i.e., insert new pixels to the right of
+        // pixels corresponding to seam
+        Picture newPicture = new Picture(picture.width(), picture.height() + 1);
+        for (int x = 0; x < picture.width(); x++) {
+          int newY = 0;
+          for (int y = 0; y < picture.height(); y++) {
+            newPicture.set(x, newY++, picture.get(x, y));
+            if (seam[y] == 1) {
+              // Insert new pixels
+              Color leftPixel = picture.get(x, y);
+              Color rightPixel = picture.get(x, y + 1);
+              int avgRed = (leftPixel.getRed() + rightPixel.getRed()) / 2;
+              int avgGreen = (leftPixel.getGreen() + rightPixel.getGreen()) / 2;
+              int avgBlue = (leftPixel.getBlue() + rightPixel.getBlue()) / 2;
+              Color avgColor = new Color(avgRed, avgGreen, avgBlue);
+              newPicture.set(x, newY++, avgColor);
+            }
+          }
+        }
+        picture = newPicture;
+      }
+    }
+  }
 
   // true for horizontal, false for vertical
   public void undoCompress(boolean direction) {
-    if (!direction){
-            if (!VseamsStack.isEmpty()) {
-                int[] seam = VseamsStack.pop();
+    if (!direction) {
+      if (!VseamsStack.isEmpty()) {
+        int[] seam = VseamsStack.pop();
 
-                // Insert pixels corresponding to seam from originImage into corresponding positions of currentImage
-                Picture newPicture = new Picture(picture.width() - 1, picture.height());
-                for (int y = 0; y < picture.height(); y++) {
-                    int newX = 0;
-                    for (int x = 0; x < picture.width(); x++) {
-                        if (seam[x] == 0) {
-                            newPicture.set(newX++, y, picture.get(x, y));
-                        } else {
-                            newPicture.set(newX, y, originPicture.get(x, y)); // Insert pixels from originImage
-                        }
-                    }
-                }
-                picture = newPicture;
+        // Insert pixels corresponding to seam from originImage into corresponding positions of
+        // currentImage
+        Picture newPicture = new Picture(picture.width() - 1, picture.height());
+        for (int y = 0; y < picture.height(); y++) {
+          int newX = 0;
+          for (int x = 0; x < picture.width(); x++) {
+            if (seam[x] == 0) {
+              newPicture.set(newX++, y, picture.get(x, y));
+            } else {
+              newPicture.set(newX, y, originPicture.get(x, y)); // Insert pixels from originImage
             }
-        }else{
-            if (!HseamsStack.isEmpty()) {
-                int[] seam = HseamsStack.pop();
-
-               // Insert pixels corresponding to seam from originImage into corresponding positions of currentImage
-                Picture newPicture = new Picture(picture.width(), picture.height()-1);
-                for (int y = 0; y < picture.height(); y++) {
-                    int newY = 0;
-                    for (int x = 0; x < picture.width(); x++) {
-                        if (seam[y] == 0) {
-                            newPicture.set(x, newY++, picture.get(x, y));
-                        } else {
-                            newPicture.set(x, newY, originPicture.get(x, y)); /// Insert pixels from originImage
-                        }
-                    }
-                }
-                picture = newPicture;
-            }
+          }
         }
+        picture = newPicture;
+      }
+    } else {
+      if (!HseamsStack.isEmpty()) {
+        int[] seam = HseamsStack.pop();
+
+        // Insert pixels corresponding to seam from originImage into corresponding positions of
+        // currentImage
+        Picture newPicture = new Picture(picture.width(), picture.height() - 1);
+        for (int x = 0; x < picture.width(); x++) {
+          int newY = 0;
+          for (int y = 0; y < picture.height(); y++) {
+            if (seam[y] == 0) {
+              newPicture.set(x, newY++, picture.get(x, y));
+            } else {
+              newPicture.set(x, newY, originPicture.get(x, y)); // / Insert pixels from originImage
+            }
+          }
+        }
+        picture = newPicture;
+      }
+    }
   }
 
   // true for horizontal, false for vertical
   public void compress(boolean direction) {
-    if (direction){
-            calEnergyMap();
-            calHcost();
-            int[] seam = findHseam(1);
+    if (direction) {
+      calEnergyMap();
+      calHcost();
+      int[] seam = findHseam(1);
 
-            // Remove pixels corresponding to seam from currentImage
-            Picture newPicture = new Picture(picture.width() - 1, picture.height());
-            for (int y = 0; y < picture.height(); y++) {
-                int newX = 0;
-                for (int x = 0; x < picture.width(); x++) {
-                    if (seam[y] != x) {
-                        newPicture.set(newX++, y, picture.get(x, y));
-                    }
-                }
-            }
-            picture = newPicture;
-
-            VseamsStack.push(seam);
-        }else{
-            calEnergyMap();
-            calVcost();
-            int[] seam = findVseam(1);
-
-            // Remove pixels corresponding to seam from currentImage
-            Picture newPicture = new Picture(picture.width() , picture.height()-1);
-            for (int y = 0; y < picture.height(); y++) {
-                int newY = 0;
-                for (int x = 0; x < picture.width(); x++) {
-                    if (seam[x] != y) {
-                        newPicture.set(x, newY++, picture.get(x, y));
-                    }
-                }
-            }
-            picture = newPicture;
-
-            HseamsStack.push(seam);
+      // Remove pixels corresponding to seam from currentImage
+      Picture newPicture = new Picture(picture.width() - 1, picture.height());
+      for (int y = 0; y < picture.height(); y++) {
+        int newX = 0;
+        for (int x = 0; x < picture.width(); x++) {
+          if (seam[y] != x) {
+            newPicture.set(newX++, y, picture.get(x, y));
+          }
         }
+      }
+      picture = newPicture;
+
+      VseamsStack.push(seam);
+    } else {
+      calEnergyMap();
+      calVcost();
+      int[] seam = findVseam(1);
+
+      // Remove pixels corresponding to seam from currentImage
+      Picture newPicture = new Picture(picture.width(), picture.height() - 1);
+      for (int x = 0; x < picture.width(); x++) {
+        int newY = 0;
+        for (int y = 0; y < picture.height(); y++) {
+          if (seam[x] != y) {
+            newPicture.set(x, newY++, picture.get(x, y));
+          }
+        }
+      }
+      picture = newPicture;
+
+      HseamsStack.push(seam);
+    }
   }
 
   // true for horizontal, false for vertical
-  public void undoStrech(boolean direction) {}
+  public void undoStrech(boolean direction) {
+    if (!direction) {
+      int targetSeams = picture.width() - originPicture.width();
+      while (targetSeams > 0 && !VseamsStack.isEmpty()) {
+        int[] seam = VseamsStack.pop(); // choose a seam
+        targetSeams--; // seam ->1
+
+        // Remove pixels on the right side of currentImage
+        Picture newPicture = new Picture(picture.width() - 1, picture.height());
+        for (int y = 0; y < picture.height(); y++) {
+          int newX = 0;
+          for (int x = 0; x < picture.width(); x++) {
+            if (x
+                != seam[
+                    y]) { // Copy pixels to the new image if their x-coordinate is not in the seam
+              newPicture.set(newX++, y, picture.get(x, y));
+            }
+          }
+        }
+        picture = newPicture;
+      }
+    } else {
+      int targetSeams = picture.height() - originPicture.height();
+      while (targetSeams > 0 && !HseamsStack.isEmpty()) {
+        int[] seam = HseamsStack.pop(); // choose a seam
+        targetSeams--; // seam ->1
+
+        // Remove pixels on the right side of currentImage
+        Picture newPicture = new Picture(picture.width(), picture.height() - 1);
+        for (int x = 0; x < picture.width(); x++) {
+          int newY = 0;
+          for (int y = 0; y < picture.height(); y++) {
+            if (y
+                != seam[
+                    x]) { // Copy pixels to the new image if their y-coordinate is not in the seam
+              newPicture.set(x, newY++, picture.get(x, y));
+            }
+          }
+        }
+        picture = newPicture;
+      }
+    }
+  }
 
   public void operate(int op) {
     switch (op) {
