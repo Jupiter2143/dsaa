@@ -6,8 +6,8 @@ public class Test {
     SeamCarver seamCarver = new SeamCarver(new Picture("example.jpg"));
     Picture picture = seamCarver.picture();
     picture.show();
-    for (int i = 0; i < 1; i++) {
-      seamCarver.operate(0b00);
+    for (int i = 0; i < 100; i++) {
+      seamCarver.operate(0b11);
     }
     Picture newPicture = seamCarver.picture();
     newPicture.show();

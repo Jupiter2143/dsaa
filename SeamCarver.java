@@ -5,7 +5,7 @@ import java.util.PriorityQueue;
 import java.util.Stack;
 
 public class SeamCarver {
-  private Picture picture; 
+  private Picture picture;
   private Picture originPicture; // original picture
   private double[] energyMap; // energy map, 2d array to store the energy of the pixel
   private double[] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
@@ -190,6 +190,7 @@ public class SeamCarver {
   public int[] findHseam(int k) {
     // return null;
     int width = picture.width();
+    int height = picture.height();
     int[] seam = new int[width];
     // find the kth minimum number in the lasth column of Hcost
     PriorityQueue<Double> pq = new PriorityQueue<>();
