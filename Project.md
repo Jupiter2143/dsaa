@@ -57,45 +57,46 @@
 1. `void calEnergyMap()`
 
    + `double deltaSquare()`
-
 2. `void calVcost(),`; `void calHcost()`
 
    + `int minIndex()`
-
-3. `void calVseams()`; `void calHseams()`计算出k条Vseam和Hseam，并存储在`Vseams`和`Hseams`中，用于后续的`strech`操作
-
-   > 这里的k待定，表示最大的`strech`程度
-   >
-   > 暂定`k=0.5width`或`k=0.5height`
-   >
-   > `Vseams`中每一列第k小的数都需要加k-1，k从1遍历到该数组的宽度
-
-   + `int[] findHseam(int k)`k从1遍历到k
-   + `int[] findVseam(int k)`k从1遍历到k
+3. 初始化全局变量`int HStrechLog=0`, `int VStrechLog=0`
 
 ### 操作
 
 前端传来的操作：`x+1`, `y+1`, `x-1`, `y-1`，
+
+函数原型：`do(op)`
+
+直接传入到`operate(op)`函数
+
+最后将操作数push到大小为50的`undoStack`中，清空`redoStack`
+
+
+
+`void operate(int op)`函数如下
+
 每个操作数对应一个二进制数编码：00，01，11，10
 
 eg: `public static int XADD=0b00;`
 
-在函数`Image operate(int op)`中执行
-
-1. `x+1`，判断current image和origin image的width
-   + 如果大于等于，则进行`strech`操作：选择`Vseams`中的第`currentImageWidth-OriginImageWidth+1`条seam，对current image进行线性插值，即在seam对应的像素点右侧插入新的像素
-   + 如果小于，则进行`undoCompress`操作：`VseamsStack.pop()`后将`seam`对应`currentImage`右侧插入`VseamsColorStack.pop()`中的像素点
+1. `x+1`，`strech`函数：更新当前的`energyMap`并重新计算`Vcost`数组，执行`findVSeam(HstrechLog*2+1)`，对`currentImage`进行线性插值，即在`seam`对应的像素点右侧插入新的像素，最后`seamsHistory.push(seam)`，`HstrechLog+=1`
 2. `y+1`类似
-3. `x-1`，判断current image和origin image
-   + 如果小于等于，则进行`Compress`操作：更新当前的`energyMap`并重新计算`Hcost`数组，执行`findHorizontalSeam(1)`计算能量最小的`seam`，然后将`seam`对应`currentImage`的像素点删除，将删除的像素点放在数组`colors`，并push到`VseamsColorStack`，最后`VseamsStack.push(seam)`
-   + 如果大于，则进行`undoStrech`操作：选择`Vseams`中第`currentImageWidth-OriginImageWidth`条seam，将`seam`对应`currentImage`右侧的像素点删除
+3. `x-1`，`compress`函数：更新当前的`energyMap`并重新计算`Vcost`数组，执行`findVSeam(1)`计算能量最小的`seam`，然后将`seam`对应`currentImage`的像素点删除，将删除的像素点放在数组`colors`，并push到`ColorStack`，最后`seamsHistory.push(seam)`，`HstrechLog=0`
 4. `y-1`类似
 
-最后将操作数push到大小为50的`undoStack`中，清空`redoStack`
+
 
 ### Undo&Redo
 
 前端传来的操作：`undo`
+
+`op=undoStack.pop()`后判断：
+
+1. `x+1`，`undoStrech`函数：
+2. `y+1`类似
+3. `x-1`，`undoCompress`函数：
+4. `y-1`类似
 
 > `int op=~undoStack.pop()&0b11`将栈弹出的op取反
 >
@@ -105,11 +106,7 @@ eg: `public static int XADD=0b00;`
 
 前端传来的操作：`redo`
 
-> `int op=~redoStack.pop()&0b11`将栈弹出的op取反
->
-> `operate(op)`执行
->
-> `undoStack.push(op)`存储op
+`op=redoStack.pop()`后执行`operate(op)`
 
 ## 前端思路
 

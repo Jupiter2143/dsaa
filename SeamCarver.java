@@ -1,7 +1,9 @@
 import edu.princeton.cs.algs4.Picture;
 import java.awt.Color;
 // import edu.princeton.cs.algs4.StdOut;
+import java.util.Arrays;
 import java.util.PriorityQueue;
+import java.util.Stack;
 
 public class SeamCarver {
   private Picture picture; // current pictured
@@ -10,10 +12,10 @@ public class SeamCarver {
   private double[] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
   private double[] Hcost; // 2d cumulative energy matrix to store the cost of the horizontal seam
   private int[] traceMatrix; // 2d matrix to store the trace of the seam
-  private int[] Vseams;
-  private int[] Hseams;
-  private final Stack<int[]> VseamsStack = new Stack<>();
-  private final Stack<int[]> HseamsStack = new Stack<>();
+  private final Stack<int[]> strechVseamsStack = new Stack<>();
+  private final Stack<int[]> strechHseamsStack = new Stack<>();
+  private final Stack<int[]> compressVseamsStack = new Stack<>();
+  private final Stack<int[]> compressHseamsStack = new Stack<>();
   private final Stack<Color[]> VseamsColorStack = new Stack<>();
   private final Stack<Color[]> HseamsColorStack = new Stack<>();
   // private final Stack<int[]> seamHistory = new Stack<>();
@@ -228,8 +230,8 @@ public class SeamCarver {
 
       Picture newPicture = new Picture(picture.width() + 1, picture.height());
       // int targetSeams = picture.width() - originPicture.width() + 1;
-      // while (targetSeams > 0 && !VseamsStack.isEmpty()) {
-      //   int[] seam = VseamsStack.pop();
+      // while (targetSeams > 0 && !compressVseamsStack.isEmpty()) {
+      //   int[] seam = compressVseamsStack.pop();
       //   targetSeams--; // seam->1
 
       //   // Perform linear interpolation on current image, i.e., insert new pixels to the right of
@@ -259,8 +261,8 @@ public class SeamCarver {
   // true for horizontal, false for vertical
   public void undoCompress(boolean direction) {
     if (direction) {
-      if (!VseamsStack.isEmpty()) {
-        int[] seam = VseamsStack.pop();
+      if (!compressVseamsStack.isEmpty()) {
+        int[] seam = compressVseamsStack.pop();
         Color[] colors = VseamsColorStack.pop();
 
         // Insert pixels corresponding to seam from originImage into corresponding positions of
@@ -281,8 +283,8 @@ public class SeamCarver {
         picture = newPicture;
       }
     } else {
-      if (!HseamsStack.isEmpty()) {
-        int[] seam = HseamsStack.pop();
+      if (!compressHseamsStack.isEmpty()) {
+        int[] seam = compressHseamsStack.pop();
         Color[] colors = HseamsColorStack.pop();
 
         // Insert pixels corresponding to seam from originImage into corresponding positions of
@@ -328,7 +330,7 @@ public class SeamCarver {
       }
       picture = newPicture;
       VseamsColorStack.push(colors);
-      VseamsStack.push(seam);
+      compressVseamsStack.push(seam);
     } else {
       calEnergyMap();
       calHcost();
@@ -350,7 +352,7 @@ public class SeamCarver {
       }
       picture = newPicture;
       HseamsColorStack.push(colors);
-      HseamsStack.push(seam);
+      compressHseamsStack.push(seam);
     }
   }
 
@@ -358,8 +360,8 @@ public class SeamCarver {
   public void undoStrech(boolean direction) {
     if (!direction) {
       int targetSeams = picture.width() - originPicture.width();
-      while (targetSeams > 0 && !VseamsStack.isEmpty()) {
-        int[] seam = VseamsStack.pop(); // choose a seam
+      while (targetSeams > 0 && !compressVseamsStack.isEmpty()) {
+        int[] seam = compressVseamsStack.pop(); // choose a seam
         targetSeams--; // seam ->1
 
         // Remove pixels on the right side of currentImage
@@ -378,8 +380,8 @@ public class SeamCarver {
       }
     } else {
       int targetSeams = picture.height() - originPicture.height();
-      while (targetSeams > 0 && !HseamsStack.isEmpty()) {
-        int[] seam = HseamsStack.pop(); // choose a seam
+      while (targetSeams > 0 && !compressHseamsStack.isEmpty()) {
+        int[] seam = compressHseamsStack.pop(); // choose a seam
         targetSeams--; // seam ->1
 
         // Remove pixels on the right side of currentImage
