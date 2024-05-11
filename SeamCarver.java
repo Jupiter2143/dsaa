@@ -5,7 +5,7 @@ import java.util.PriorityQueue;
 import java.util.Stack;
 
 public class SeamCarver {
-  private Picture picture; // current pictured
+  private Picture picture; 
   private Picture originPicture; // original picture
   private double[] energyMap; // energy map, 2d array to store the energy of the pixel
   private double[] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
