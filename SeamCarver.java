@@ -23,8 +23,8 @@ public class SeamCarver {
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
   // operand stack for undo and redo
-  private final Stack<int> undoStack = new Stack<>();
-  private final Stack<int> redoStack = new Stack<>();
+  private final Stack<Integer> undoStack = new Stack<>();
+  private final Stack<Integer> redoStack = new Stack<>();
 
   // create a seam carver object based on the given picture
   public SeamCarver(Picture picture) {
@@ -282,10 +282,11 @@ public class SeamCarver {
 
   // direction: show the direction of the strech, true for horizontal, false for vertical
   public void strech(boolean direction) {
+    int[] seam;
     if (direction) {
       calEnergyMap();
       calVcost();
-      int[] seam = findVseam(HstrechLog * 2 + 1);
+      seam = findVseam(HstrechLog * 2 + 1);
       HstrechLog++;
       Picture newPicture = new Picture(picture.width() + 1, picture.height());
       for (int y = 0; y < picture.height(); y++) {
@@ -310,7 +311,7 @@ public class SeamCarver {
     } else {
       calEnergyMap();
       calHcost();
-      int[] seam = findHseam(VstrechLog * 2 + 1);
+      seam = findHseam(VstrechLog * 2 + 1);
       VstrechLog++;
       Picture newPicture = new Picture(picture.width(), picture.height() + 1);
       for (int x = 0; x < picture.width(); x++) {
@@ -339,16 +340,18 @@ public class SeamCarver {
   // direction: show the direction of the compress, true for horizontal, false for vertical
   public void compress(boolean direction) {
     HstrechLog = 0;
+    int[] seam;
+    Color[] pixels;
     if (direction) {
       calEnergyMap();
       calVcost();
-      int[] seam = findVseam(1);
-      Color[] pixels = removePixels(false, seam);
+      seam = findVseam(1);
+      pixels = removePixels(false, seam);
     } else {
       calEnergyMap();
       calHcost();
-      int[] seam = findHseam(1);
-      Color[] pixels = removePixels(true, seam);
+      seam = findHseam(1);
+      pixels = removePixels(true, seam);
     }
     undoSeamsStack.push(seam);
     undoPixelsStack.push(pixels);
@@ -375,7 +378,7 @@ public class SeamCarver {
 
   // true for undo, false for redo
   public void undo(boolean undo) {
-    Stack<int> opStack = undo ? undoStack : redoStack;
+    Stack<Integer> opStack = undo ? undoStack : redoStack;
     if (opStack.isEmpty()) {
       return;
     }
