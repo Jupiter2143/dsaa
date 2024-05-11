@@ -189,7 +189,6 @@ public class SeamCarver {
   // trace back the Hcost matrix to find the kth energy-lowest seam
   public int[] findHseam(int k) {
     // return null;
-    int height = picture.height();
     int width = picture.width();
     int[] seam = new int[width];
     // find the kth minimum number in the lasth column of Hcost
