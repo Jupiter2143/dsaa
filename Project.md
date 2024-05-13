@@ -17,17 +17,11 @@
 
 + 
 
-
-
 ## Seam-Carving核心算法
 
 最小路径问题?
 
 [最短路径问题—Dijkstra 算法最详解 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/129373740)
-
-
-
-
 
 在构建Vertical Seam-Carving的Energy Map后在最上方和最下方构建一个虚拟的点，则问题转化为两个虚拟点的最小路径问题
 
@@ -181,7 +175,17 @@ eg: `public static int XADD=0b00;`
 
 ## 论文
 
+### 摘要
 
+### 前言
+
+### seam-carving算法
+
+### gui设计&功能
+
+### 结尾
+
+### Appendix：函数原型；参考文献
 
 
 
