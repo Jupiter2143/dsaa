@@ -1,4 +1,3 @@
-import edu.princeton.cs.algs4.MinPQ;
 import edu.princeton.cs.algs4.Picture;
 import java.awt.Color;
 import java.util.PriorityQueue;
@@ -7,12 +6,13 @@ import java.util.Stack;
 public class SeamCarver {
   private Picture picture;
   private Picture originPicture; // original picture
-  private double[] energyMap; // energy map, 2d array to store the energy of the pixel
-  private double[] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
-  private double[] Hcost; // 2d cumulative energy matrix to store the cost of the horizontal seam
-  private int[] traceMatrix; // 2d matrix to store the trace of the seam
-  private int HstrechLog = 0;
-  private int VstrechLog = 0;
+  private double[][] energyMap; // energy map, 2d array to store the energy of the pixel
+  private double[][] mask;
+  private double[][] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
+  private double[][] Hcost; // 2d cumulative energy matrix to store the cost of the horizontal seam
+  private int[][] traceMatrix; // 2d matrix to store the trace of the seam
+  public int width = 0;
+  public int height = 0;
   private final Stack<int[]> undoSeamsStack = new Stack<>();
   private final Stack<int[]> redoSeamsStack = new Stack<>();
   private final Stack<Color[]> undoPixelsStack = new Stack<>();
@@ -28,7 +28,11 @@ public class SeamCarver {
 
   // create a seam carver object based on the given picture
   public SeamCarver(Picture picture) {
-    this.picture = picture;
+    this.originPicture = new Picture(picture);
+    this.picture = new Picture(picture);
+    this.width = picture.width();
+    this.height = picture.height();
+    calEnergyMap();
     // init energy map
   }
 
@@ -40,27 +44,16 @@ public class SeamCarver {
     return this.picture;
   }
 
-  // width of current picture
-  public int width() {
-    return this.picture.width();
-  }
-
-  // height of current picture
-  public int height() {
-    return this.picture.height();
-  }
-
   // energy of pixel at column x and row y
   private double energy(int x, int y) {
-    // return 0;
-    if (x == 0 || y == 0 || x == width() - 1 || y == height() - 1) {
+    if (x == 0 || y == 0 || x == width - 1 || y == height - 1) {
       return 1000;
     }
 
-    Color top = this.picture.get(x, y + 1);
-    Color bottom = this.picture.get(x, y - 1);
-    Color left = this.picture.get(x - 1, y);
-    Color right = this.picture.get(x + 1, y);
+    Color top = picture.get(x, y + 1);
+    Color bottom = picture.get(x, y - 1);
+    Color left = picture.get(x - 1, y);
+    Color right = picture.get(x + 1, y);
 
     return Math.sqrt(deltaSquare(top, bottom) + deltaSquare(left, right));
   }
@@ -72,41 +65,34 @@ public class SeamCarver {
   }
 
   private void calEnergyMap() {
-    energyMap = new double[width() * height()];
-    for (int i = 0; i < height(); i++) {
-      for (int j = 0; j < width(); j++) {
-        energyMap[i * width() + j] = energy(j, i);
+    // System.out.println("calEnergyMap,width:" + width + ",height:" + height);
+    energyMap = new double[height][width];
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        // System.out.println("calEnergyMap,x:" + x + ",y:" + y);
+        energyMap[y][x] = energy(x, y);
       }
     }
   }
 
   // calculate Vcost matrix
   private void calVcost() {
-    int width = picture.width();
-    int height = picture.height();
-    Vcost = new double[width * height];
-    traceMatrix = new int[width * height];
-    for (int i = 0; i < width; i++) {
-      Vcost[i] = energyMap[i];
+    Vcost = new double[height][width];
+    traceMatrix = new int[height][width];
+    for (int x = 0; x < width; x++) {
+      Vcost[0][x] = energyMap[0][x];
     }
-    for (int i = 1; i < height; i++) {
-      for (int j = 0; j < width; j++) {
-        if (j == 0) {
-          traceMatrix[i * width] = Vcost[(i - 1) * width] < Vcost[(i - 1) * width + 1] ? 0 : 1;
-          Vcost[i * width] = energyMap[i * width] + Vcost[(i - 1) * width + traceMatrix[i * width]];
-        } else if (j == width - 1) {
-          traceMatrix[i * width + j] =
-              Vcost[(i - 1) * width + j - 1] < Vcost[(i - 1) * width + j] ? -1 : 0;
-          Vcost[i * width + j] =
-              energyMap[i * width + j] + Vcost[(i - 1) * width + j + traceMatrix[i * width + j]];
+    for (int y = 1; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        if (x == 0) {
+          traceMatrix[y][x] = Vcost[y - 1][x] < Vcost[y - 1][x + 1] ? 0 : 1;
+          Vcost[y][x] = energyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
+        } else if (x == width - 1) {
+          traceMatrix[y][x] = Vcost[y - 1][x - 1] < Vcost[y - 1][x] ? -1 : 0;
+          Vcost[y][x] = energyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         } else {
-          traceMatrix[i * width + j] =
-              minIndex(
-                  Vcost[(i - 1) * width + j - 1],
-                  Vcost[(i - 1) * width + j],
-                  Vcost[(i - 1) * width + j + 1]);
-          Vcost[i * width + j] =
-              energyMap[i * width + j] + Vcost[(i - 1) * width + j + traceMatrix[i * width + j]];
+          traceMatrix[y][x] = minIndex(Vcost[y - 1][x - 1], Vcost[y - 1][x], Vcost[y - 1][x + 1]);
+          Vcost[y][x] = energyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         }
       }
     }
@@ -114,38 +100,28 @@ public class SeamCarver {
 
   // calculate Hcost matrix
   private void calHcost() {
-    int width = picture.width();
-    int height = picture.height();
-    Hcost = new double[width * height];
-    traceMatrix = new int[width * height];
-    for (int i = 0; i < height; i++) {
-      Hcost[i * width] = energyMap[i * width];
+    Hcost = new double[height][width];
+    traceMatrix = new int[height][width];
+    for (int y = 0; y < height; y++) {
+      Hcost[y][0] = energyMap[y][0];
     }
-    for (int i = 1; i < width; i++) {
-      for (int j = 0; j < height; j++) {
-        if (j == 0) {
-          traceMatrix[j * width + i] =
-              Hcost[j * width + i - 1] < Hcost[(j + 1) * width + i - 1] ? 0 : 1;
-          Hcost[j * width + i] =
-              energyMap[j * width + i] + Hcost[j * width + i - 1 + traceMatrix[j * width + i]];
-        } else if (j == height - 1) {
-          traceMatrix[j * width + i] =
-              Hcost[(j - 1) * width + i - 1] < Hcost[j * width + i - 1] ? -1 : 0;
-          Hcost[j * width + i] =
-              energyMap[j * width + i] + Hcost[j * width + i - 1 + traceMatrix[j * width + i]];
+    for (int x = 1; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        if (y == 0) {
+          traceMatrix[y][x] = Hcost[y][x - 1] < Hcost[y + 1][x - 1] ? 0 : 1;
+          Hcost[y][x] = energyMap[y][x] + Hcost[y][x - 1 + traceMatrix[y][x]];
+        } else if (y == height - 1) {
+          traceMatrix[y][x] = Hcost[y - 1][x - 1] < Hcost[y][x - 1] ? -1 : 0;
+          Hcost[y][x] = energyMap[y][x] + Hcost[y][x - 1 + traceMatrix[y][x]];
         } else {
-          traceMatrix[j * width + i] =
-              minIndex(
-                  Hcost[(j - 1) * width + i - 1],
-                  Hcost[j * width + i - 1],
-                  Hcost[(j + 1) * width + i - 1]);
-          Hcost[j * width + i] =
-              energyMap[j * width + i] + Hcost[j * width + i - 1 + traceMatrix[j * width + i]];
+          traceMatrix[y][x] = minIndex(Hcost[y - 1][x - 1], Hcost[y][x - 1], Hcost[y + 1][x - 1]);
+          Hcost[y][x] = energyMap[y][x] + Hcost[y][x - 1 + traceMatrix[y][x]];
         }
       }
     }
   }
 
+  // find the index of the minimum value of a, b, c
   private static int minIndex(double a, double b, double c) {
     if (a < b) {
       if (a < c) {
@@ -164,197 +140,207 @@ public class SeamCarver {
 
   // trace back the Vcost matrix to find the kth energy-lowest seam
   public int[] findVseam(int k) {
-    int height = picture.height();
-    int width = picture.width();
     int[] seam = new int[height];
-    MinPQ<Double> pq = new MinPQ<>();
-    for (int i = 0; i < width; i++) {
-      pq.insert(Vcost[(height - 1) * width + i]);
+    PriorityQueue<Double> pq = new PriorityQueue<>();
+    for (int x = 0; x < width; x++) {
+      pq.add(Vcost[height - 1][x]);
     }
     for (int i = 0; i < k - 1; i++) {
-      pq.delMin();
+      pq.poll();
     }
-    double kMin = pq.delMin();
-    for (int i = 0; i < width; i++) {
-      if (Vcost[(height - 1) * width + i] == kMin) {
-        seam[height - 1] = i;
+    double kMin = pq.poll();
+    for (int x = 0; x < width; x++) {
+      if (Vcost[height - 1][x] == kMin) {
+        seam[height - 1] = x;
         break;
       }
     }
-    for (int i = height - 2; i >= 0; i--) {
-      seam[i] = seam[i + 1] + traceMatrix[i * width + seam[i + 1]];
+    for (int y = height - 2; y >= 0; y--) {
+      seam[y] = seam[y + 1] + traceMatrix[y + 1][seam[y + 1]];
     }
     return seam;
   }
 
   // trace back the Hcost matrix to find the kth energy-lowest seam
   public int[] findHseam(int k) {
-    // return null;
-    int width = picture.width();
-    int height = picture.height();
     int[] seam = new int[width];
-    // find the kth minimum number in the lasth column of Hcost
     PriorityQueue<Double> pq = new PriorityQueue<>();
-    for (int i = 0; i < height; i++) {
-      pq.add(Hcost[i * width + width - 1]);
+    for (int y = 0; y < height; y++) {
+      pq.add(Hcost[y][width - 1]);
     }
     for (int i = 0; i < k - 1; i++) {
       pq.poll();
     }
-    for (int i = 0; i < height; i++)
-      if (Hcost[i * width + width - 1] == pq.peek()) {
-        seam[width - 1] = i;
+    double kMin = pq.poll();
+    for (int y = 0; y < height; y++) {
+      if (Hcost[y][width - 1] == kMin) {
+        seam[width - 1] = y;
         break;
       }
-    for (int i = width - 2; i >= 0; i--)
-      seam[i] = seam[i + 1] + traceMatrix[seam[i + 1] * width + i];
+    }
+    for (int x = width - 2; x >= 0; x--) {
+      seam[x] = seam[x + 1] + traceMatrix[seam[x + 1]][x + 1];
+    }
     return seam;
   }
 
-  // direction: show the direction of the seam, true for horizontal, false for vertical
-  private void insertPixels(boolean direction, int[] seam, Color[] pixels) {
-    if (direction) {
-      Picture newPicture = new Picture(picture.width(), picture.height() + 1);
-      for (int x = 0; x < picture.width(); x++) {
-        for (int y = 0; y < picture.height(); y++) {
-          if (y < seam[x]) {
-            newPicture.set(x, y, picture.get(x, y));
-          } else if (y == seam[x]) {
-            newPicture.set(x, y, pixels[x]);
-            newPicture.set(x, y + 1, picture.get(x, y));
-          } else {
-            newPicture.set(x, y + 1, picture.get(x, y));
-          }
-        }
-      }
-      picture = newPicture;
-    } else {
-      Picture newPicture = new Picture(picture.width() + 1, picture.height());
-      for (int y = 0; y < picture.height(); y++) {
-        for (int x = 0; x < picture.width(); x++) {
-          if (x < seam[y]) {
-            newPicture.set(x, y, picture.get(x, y));
-          } else if (x == seam[y]) {
+  // XADD or YADD
+  private void insertPixels(int op, int[] seam, Color[] pixels) {
+    if (op == XADD) {
+      Picture newPicture = new Picture(width + 1, height);
+      for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+          if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
+          else if (x == seam[y]) {
             newPicture.set(x, y, pixels[y]);
             newPicture.set(x + 1, y, picture.get(x, y));
-          } else {
-            newPicture.set(x + 1, y, picture.get(x, y));
-          }
-        }
-      }
+          } else newPicture.set(x + 1, y, picture.get(x, y));
       picture = newPicture;
+      width++;
+    } else {
+      Picture newPicture = new Picture(width, height + 1);
+      for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+          if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
+          else if (y == seam[x]) {
+            newPicture.set(x, y, pixels[x]);
+            newPicture.set(x, y + 1, picture.get(x, y));
+          } else newPicture.set(x, y + 1, picture.get(x, y));
+      picture = newPicture;
+      height++;
     }
+    updateEnergyMap(op, seam);
   }
 
-  // direction: show the direction of the seam, true for horizontal, false for vertical
-  private Color[] removePixels(boolean direction, int[] seam) {
-    Color[] pixels = new Color[direction ? picture.width() : picture.height()];
-    if (direction) {
-      Picture newPicture = new Picture(picture.width(), picture.height() - 1);
-      for (int x = 0; x < picture.width(); x++) {
-        for (int y = 0; y < picture.height(); y++) {
-          if (y < seam[x]) {
-            newPicture.set(x, y, picture.get(x, y));
-          } else if (y > seam[x]) {
-            newPicture.set(x, y - 1, picture.get(x, y));
-          } else {
-            pixels[x] = picture.get(x, y);
-          }
-        }
-      }
+  // XSUB or YSUB
+  private Color[] removePixels(int op, int[] seam) {
+    Color[] pixels = new Color[(op == XSUB) ? width : height];
+    if (op == XSUB) {
+      Picture newPicture = new Picture(width - 1, height);
+      for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+          if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
+          else if (x > seam[y]) newPicture.set(x - 1, y, picture.get(x, y));
+          else pixels[y] = picture.get(x, y);
       picture = newPicture;
+      width--;
     } else {
-      Picture newPicture = new Picture(picture.width() - 1, picture.height());
-      for (int y = 0; y < picture.height(); y++) {
-        for (int x = 0; x < picture.width(); x++) {
-          if (x < seam[y]) {
-            newPicture.set(x, y, picture.get(x, y));
-          } else if (x > seam[y]) {
-            newPicture.set(x - 1, y, picture.get(x, y));
-          } else {
-            pixels[y] = picture.get(x, y);
-          }
-        }
-      }
+      Picture newPicture = new Picture(width, height - 1);
+      for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+          if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
+          else if (y > seam[x]) newPicture.set(x, y - 1, picture.get(x, y));
+          else pixels[x] = picture.get(x, y);
       picture = newPicture;
+      height--;
     }
+    updateEnergyMap(op, seam);
     return pixels;
   }
 
   private void updateEnergyMap(int op, int[] seam) {
-    if (op == XADD) {}
+    double[][] newEnergyMap = new double[height][width];
+    if (op == XADD) {
+      for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+          if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
+          else if (x > seam[y] + 1) newEnergyMap[y][x] = energyMap[y][x - 1];
+          else newEnergyMap[y][x] = energy(x, y);
+    } else if (op == XSUB) {
+      for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+          if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
+          else if (x > seam[y]) newEnergyMap[y][x] = energyMap[y][x + 1];
+          else newEnergyMap[y][x] = energy(x, y);
+    } else if (op == YADD) {
+      for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+          if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
+          else if (y > seam[x] + 1) newEnergyMap[y][x] = energyMap[y - 1][x];
+          else newEnergyMap[y][x] = energy(x, y);
+    } else {
+      for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++)
+          if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
+          else if (y > seam[x]) newEnergyMap[y][x] = energyMap[y + 1][x];
+          else newEnergyMap[y][x] = energy(x, y);
+    }
+    energyMap = newEnergyMap;
   }
 
-  // direction: show the direction of the strech, true for horizontal, false for vertical
-  public void strech(boolean direction) {
-    calEnergyMap();
+  // XADD or YADD
+  public void strech(int op) {
     Color left;
-    Color right;
+    Color top;
+    Color here;
     Color avg;
-    if (direction) {
+    if (op == XADD) {
+      Color[] pixels = new Color[height];
       calVcost();
-      int[] seam = findVseam(3 * HstrechLog + 1);
-      HstrechLog++;
-      Picture newPicture = new Picture(picture.width() + 1, picture.height());
-      for (int y = 0; y < picture.height(); y++) {
-        for (int x = 0; x < picture.width(); x++) {
-          if (x < seam[y]) {
-            newPicture.set(x, y, picture.get(x, y));
-          } else if (x == seam[y]) {
-            if (x == 0) {
-              left = picture.get(x, y);
-            } else {
-              left = picture.get(x - 1, y);
-            }
-            right = picture.get(x, y);
+      int[] seam = findVseam(1);
+      // get the pixel to be inserted
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          if (x == seam[y]) {
+            if (x == 0) left = picture.get(x, y);
+            else left = picture.get(x - 1, y);
+            here = picture.get(x, y);
             avg =
                 new Color(
-                    (left.getRed() + right.getRed()) / 2,
-                    (left.getGreen() + right.getGreen()) / 2,
-                    (left.getBlue() + right.getBlue()) / 2);
-            newPicture.set(x, y, left);
-            newPicture.set(x + 1, y, avg);
-
-          } else {
-            newPicture.set(x + 1, y, picture.get(x, y));
+                    (left.getRed() + here.getRed()) / 2,
+                    (left.getGreen() + here.getGreen()) / 2,
+                    (left.getBlue() + here.getBlue()) / 2);
           }
         }
       }
-      picture = newPicture;
+      insertPixels(op, seam, pixels);
       undoSeamsStack.push(seam);
     } else {
+      Color[] pixels = new Color[width];
+      calHcost();
+      int[] seam = findHseam(1);
+      // get the pixel to be inserted
+      for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+          if (y == seam[x]) {
+            if (y == 0) top = picture.get(x, y);
+            else top = picture.get(x, y - 1);
+            here = picture.get(x, y);
+            avg =
+                new Color(
+                    (top.getRed() + here.getRed()) / 2,
+                    (top.getGreen() + here.getGreen()) / 2,
+                    (top.getBlue() + here.getBlue()) / 2);
+          }
+        }
+      }
+      insertPixels(op, seam, pixels);
+      undoSeamsStack.push(seam);
     }
   }
 
-  // direction: show the direction of the compress, true for horizontal, false for vertical
-  public void compress(boolean direction) {
-    HstrechLog = 0;
+  // XSUB or YSUB
+  public void compress(int op) {
     int[] seam;
     Color[] pixels;
-    if (direction) {
-      calEnergyMap();
+    if (op == XSUB) {
       calVcost();
       seam = findVseam(1);
-      pixels = removePixels(false, seam);
+      pixels = removePixels(op, seam);
     } else {
-      calEnergyMap();
       calHcost();
       seam = findHseam(1);
-      pixels = removePixels(true, seam);
+      pixels = removePixels(op, seam);
     }
     undoSeamsStack.push(seam);
     undoPixelsStack.push(pixels);
   }
 
   public void operate(int op) {
-    // horizontal or vertical
-    boolean direction = (op == XADD || op == XSUB);
-    // add or sub
-    boolean add = (op == XADD || op == YADD);
-    if (add) {
-      strech(direction);
+    if (op == XADD || op == YADD) {
+      strech(op);
     } else {
-      compress(direction);
+      compress(op);
     }
     undoStack.push(op);
     if (undoStack.size() > 50) {
@@ -383,23 +369,19 @@ public class SeamCarver {
       // insert the seam
       int[] seam = seamsStacksFrom.pop();
       Color[] pixels = pixelsStackFrom.pop();
-      insertPixels(!direction, seam, pixels);
+      insertPixels(op, seam, pixels);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     } else {
       // undo strech or redo compress
       // remove the seam
       int[] seam = seamsStacksFrom.pop();
-      Color[] pixels = removePixels(!direction, seam);
+      Color[] pixels = removePixels(op, seam);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     }
   }
 
   // unit testing (optional)
-  public static void main(String[] args) {
-    // StdOut.println("Hello World");
-    // Picture picture = new Picture("example.jpg");
-    // picture.show();
-  }
+  public static void main(String[] args) {}
 }
