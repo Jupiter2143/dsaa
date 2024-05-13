@@ -12,8 +12,8 @@ public class Test {
     SeamCarver seamCarver = new SeamCarver(new Picture("example.jpg"));
     Picture picture = seamCarver.picture();
     picture.show();
-    for (int i = 0; i < 50; i++) {
-      seamCarver.operate(XSUB);
+    for (int i = 0; i < 400; i++) {
+      seamCarver.operate(XADD);
     }
     Picture newPicture = seamCarver.picture();
     newPicture.show();

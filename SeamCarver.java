@@ -214,14 +214,16 @@ public class SeamCarver {
 
   // XSUB or YSUB
   private Color[] removePixels(int op, int[] seam) {
-    Color[] pixels = new Color[(op == XSUB) ? width : height];
+    Color[] pixels = new Color[(op == XSUB) ? height : width];
     if (op == XSUB) {
       Picture newPicture = new Picture(width - 1, height);
       for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
           if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
           else if (x > seam[y]) newPicture.set(x - 1, y, picture.get(x, y));
-          else pixels[y] = picture.get(x, y);
+          else {
+            pixels[y] = picture.get(x, y);
+          }
       picture = newPicture;
       width--;
     } else {
@@ -230,7 +232,9 @@ public class SeamCarver {
         for (int y = 0; y < height; y++)
           if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
           else if (y > seam[x]) newPicture.set(x, y - 1, picture.get(x, y));
-          else pixels[x] = picture.get(x, y);
+          else {
+            pixels[x] = picture.get(x, y);
+          }
       picture = newPicture;
       height--;
     }
@@ -290,6 +294,7 @@ public class SeamCarver {
                     (left.getRed() + here.getRed()) / 2,
                     (left.getGreen() + here.getGreen()) / 2,
                     (left.getBlue() + here.getBlue()) / 2);
+            pixels[y] = avg;
           }
         }
       }
@@ -311,6 +316,7 @@ public class SeamCarver {
                     (top.getRed() + here.getRed()) / 2,
                     (top.getGreen() + here.getGreen()) / 2,
                     (top.getBlue() + here.getBlue()) / 2);
+            pixels[x] = avg;
           }
         }
       }
