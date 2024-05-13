@@ -16,6 +16,7 @@ public class Test {
       seamCarver.operate(XADD);
     }
     Picture newPicture = seamCarver.picture();
+    // seamCarver.printEnergyMap();
     newPicture.show();
   }
 }

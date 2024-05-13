@@ -8,6 +8,10 @@ public class SeamCarver {
   private Picture originPicture; // original picture
   private double[][] energyMap; // energy map, 2d array to store the energy of the pixel
   private double[][] mask;
+  // private double[][] split;
+  private boolean maskFlag = false;
+  private boolean splitFlag = false;
+  private double[][] maskedEnergyMap;
   private double[][] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
   private double[][] Hcost; // 2d cumulative energy matrix to store the cost of the horizontal seam
   private int[][] traceMatrix; // 2d matrix to store the trace of the seam
@@ -65,11 +69,9 @@ public class SeamCarver {
   }
 
   private void calEnergyMap() {
-    // System.out.println("calEnergyMap,width:" + width + ",height:" + height);
     energyMap = new double[height][width];
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        // System.out.println("calEnergyMap,x:" + x + ",y:" + y);
         energyMap[y][x] = energy(x, y);
       }
     }
@@ -79,20 +81,34 @@ public class SeamCarver {
   private void calVcost() {
     Vcost = new double[height][width];
     traceMatrix = new int[height][width];
+    maskedEnergyMap = new double[height][width];
+    // maskedEnergyMap = EnergyMap+mask+split
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        maskedEnergyMap[y][x] = energyMap[y][x];
+        if (maskFlag) {
+          maskedEnergyMap[y][x] += mask[y][x];
+        }
+        // if (splitFlag) {
+        //   maskedEnergyMap[y][x] += split[y][x];
+        // }
+      }
+    }
+
     for (int x = 0; x < width; x++) {
-      Vcost[0][x] = energyMap[0][x];
+      Vcost[0][x] = maskedEnergyMap[0][x];
     }
     for (int y = 1; y < height; y++) {
       for (int x = 0; x < width; x++) {
         if (x == 0) {
           traceMatrix[y][x] = Vcost[y - 1][x] < Vcost[y - 1][x + 1] ? 0 : 1;
-          Vcost[y][x] = energyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
+          Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         } else if (x == width - 1) {
           traceMatrix[y][x] = Vcost[y - 1][x - 1] < Vcost[y - 1][x] ? -1 : 0;
-          Vcost[y][x] = energyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
+          Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         } else {
           traceMatrix[y][x] = minIndex(Vcost[y - 1][x - 1], Vcost[y - 1][x], Vcost[y - 1][x + 1]);
-          Vcost[y][x] = energyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
+          Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         }
       }
     }
@@ -249,25 +265,25 @@ public class SeamCarver {
         for (int x = 0; x < width; x++)
           if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (x > seam[y] + 1) newEnergyMap[y][x] = energyMap[y][x - 1];
-          else newEnergyMap[y][x] = energy(x, y);
+          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
     } else if (op == XSUB) {
       for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
           if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (x > seam[y]) newEnergyMap[y][x] = energyMap[y][x + 1];
-          else newEnergyMap[y][x] = energy(x, y);
+          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
     } else if (op == YADD) {
       for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
           if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (y > seam[x] + 1) newEnergyMap[y][x] = energyMap[y - 1][x];
-          else newEnergyMap[y][x] = energy(x, y);
+          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
     } else {
       for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
           if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (y > seam[x]) newEnergyMap[y][x] = energyMap[y + 1][x];
-          else newEnergyMap[y][x] = energy(x, y);
+          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
     }
     energyMap = newEnergyMap;
   }
@@ -298,6 +314,7 @@ public class SeamCarver {
           }
         }
       }
+      splitFlag = true;
       insertPixels(op, seam, pixels);
       undoSeamsStack.push(seam);
     } else {
@@ -320,6 +337,7 @@ public class SeamCarver {
           }
         }
       }
+      splitFlag = true;
       insertPixels(op, seam, pixels);
       undoSeamsStack.push(seam);
     }
