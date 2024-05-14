@@ -14,13 +14,15 @@ public class Test {
     for (int i = 0; i < 100; i++) {
       seamCarver.operate(XSUB);
       seamCarver.operate(YSUB);
+      seamCarver.operate(XADD);
+      seamCarver.operate(YADD);
     }
     seamCarver.picture().show();
     // for (int i = 0; i < 400; i++) seamCarver.operate(YADD);
     // seamCarver.picture().show();
-    for (int i = 0; i < 200; i++) seamCarver.undo(true);
+    for (int i = 0; i < 400; i++) seamCarver.undo(true);
     seamCarver.picture().show();
-    for (int i = 0; i < 200; i++) seamCarver.undo(false);
-    seamCarver.picture().show();
+    // for (int i = 0; i < 200; i++) seamCarver.undo(false);
+    // seamCarver.picture().show();
   }
 }
