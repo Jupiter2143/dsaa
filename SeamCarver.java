@@ -125,13 +125,14 @@ public class SeamCarver {
       for (int y = 0; y < height; y++) {
         if (y == 0) {
           traceMatrix[y][x] = Hcost[y][x - 1] < Hcost[y + 1][x - 1] ? 0 : 1;
-          Hcost[y][x] = energyMap[y][x] + Hcost[y][x - 1 + traceMatrix[y][x]];
+          Hcost[y][x] = energyMap[y][x] + Hcost[y + traceMatrix[y][x]][x - 1];
         } else if (y == height - 1) {
           traceMatrix[y][x] = Hcost[y - 1][x - 1] < Hcost[y][x - 1] ? -1 : 0;
-          Hcost[y][x] = energyMap[y][x] + Hcost[y][x - 1 + traceMatrix[y][x]];
+          Hcost[y][x] = energyMap[y][x] + Hcost[y + traceMatrix[y][x]][x - 1];
         } else {
           traceMatrix[y][x] = minIndex(Hcost[y - 1][x - 1], Hcost[y][x - 1], Hcost[y + 1][x - 1]);
-          Hcost[y][x] = energyMap[y][x] + Hcost[y][x - 1 + traceMatrix[y][x]];
+          // System.out.println("traceMatrix[y][x]: " + traceMatrix[y][x]);
+          Hcost[y][x] = energyMap[y][x] + Hcost[y + traceMatrix[y][x]][x - 1];
         }
       }
     }
@@ -260,16 +261,13 @@ public class SeamCarver {
 
   private void updateEnergyMap(int op, int[] seam) {
     double[][] newEnergyMap = new double[height][width];
-    double midEnergy = splitFlag ? 1000 : 0;
-    double sideEnergy = splitFlag ? 500 : 0;
+    double splitEnergy = splitFlag ? 1000 : 0;
     if (op == XADD) {
       for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
           if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (x > seam[y] + 1) newEnergyMap[y][x] = energyMap[y][x - 1];
-          else if (x == seam[y] - 1) newEnergyMap[y][x] = energy(x, y) + sideEnergy;
-          else if (x == seam[y]) newEnergyMap[y][x] = energy(x, y) + midEnergy;
-          else newEnergyMap[y][x] = energy(x, y) + sideEnergy;
+          else newEnergyMap[y][x] = splitFlag ? energyMap[y][seam[y]] + splitEnergy : energy(x, y);
     } else if (op == XSUB) {
       for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
@@ -281,9 +279,11 @@ public class SeamCarver {
         for (int y = 0; y < height; y++)
           if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (y > seam[x] + 1) newEnergyMap[y][x] = energyMap[y - 1][x];
-          else if (y == seam[x] - 1) newEnergyMap[y][x] = energy(x, y) + sideEnergy;
-          else if (y == seam[x]) newEnergyMap[y][x] = energy(x, y) + midEnergy;
-          else newEnergyMap[y][x] = energy(x, y) + sideEnergy;
+          else {
+            // System.out.println("width: " + width + ",seam.length: " + seam.length);
+            // System.out.println("height: " + height + ",seam[x]: " + seam[x]);
+            newEnergyMap[y][x] = splitFlag ? energyMap[seam[x]][x] + splitEnergy : energy(x, y);
+          }
     } else {
       for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
@@ -376,9 +376,6 @@ public class SeamCarver {
       compress(op);
     }
     undoStack.push(op);
-    if (undoStack.size() > 1000) {
-      undoStack.remove(0);
-    }
     redoStack.clear();
     redoSeamsStack.clear();
     redoPixelsStack.clear();
@@ -386,32 +383,36 @@ public class SeamCarver {
 
   // true for undo, false for redo
   public void undo(boolean undo) {
-    Stack<Integer> opStack = undo ? undoStack : redoStack;
-    if (opStack.isEmpty()) {
+    Stack<Integer> opStackFrom = undo ? undoStack : redoStack;
+    Stack<Integer> opStackTo = undo ? redoStack : undoStack;
+    if (opStackFrom.isEmpty()) {
       return;
     }
     Stack<int[]> seamsStacksFrom = undo ? undoSeamsStack : redoSeamsStack;
     Stack<Color[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
     Stack<int[]> seamsStacksTo = undo ? redoSeamsStack : undoSeamsStack;
     Stack<Color[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
-    int op = opStack.pop();
+    int op = opStackFrom.pop();
     int invOp = ~op & 0b11;
     boolean add = (op == XADD || op == YADD);
+    boolean direct = (op == XADD || op == XSUB);
     int[] seam = seamsStacksFrom.pop();
     if (undo ^ add) {
-      // undo compress or redo strech
+      // undo compress or redo strech: undo+XSUP or redo+XADD
       // insert the seam
       Color[] pixels = pixelsStackFrom.pop();
-      insertPixels(invOp, seam, pixels);
+      insertPixels(direct ? XADD : YADD, seam, pixels);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     } else {
-      // undo strech or redo compress
+      // undo strech or redo compress: undo+XADD or redo+XSUB
       // remove the seam
-      Color[] pixels = removePixels(invOp, seam);
+      System.out.println("undo: " + undo + ", add: " + add);
+      Color[] pixels = removePixels(direct ? XSUB : YSUB, seam);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     }
+    opStackTo.push(op);
   }
 
   // unit testing (optional)
