@@ -15,6 +15,9 @@ public class SeamCarver implements ISeamCarver {
   private int[][] traceMatrix; // 2d matrix to store the trace of the seam
   private int width;
   private int height;
+  // operand stack for undo and redo
+  private final Stack<Integer> undoStack = new Stack<>();
+  private final Stack<Integer> redoStack = new Stack<>();
   private final Stack<int[]> undoSeamsStack = new Stack<>();
   private final Stack<int[]> redoSeamsStack = new Stack<>();
   private final Stack<Color[]> undoPixelsStack = new Stack<>();
@@ -24,9 +27,6 @@ public class SeamCarver implements ISeamCarver {
   private static final int YADD = 0b01;
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
-  // operand stack for undo and redo
-  private final Stack<Integer> undoStack = new Stack<>();
-  private final Stack<Integer> redoStack = new Stack<>();
 
   // create a seam carver object based on the given picture
   public SeamCarver(Picture picture) {
@@ -128,7 +128,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // trace back the Vcost matrix to find the lowest energy seam
-  public int[] findVseam() {
+  private int[] findVseam() {
     int[] seam = new int[height];
     int index = 0;
     double min = Vcost[height - 1][0];
@@ -143,7 +143,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // trace back the Hcost matrix to find the lowest energy seam
-  public int[] findHseam() {
+  private int[] findHseam() {
     int[] seam = new int[width];
     int index = 0;
     double min = Hcost[0][width - 1];
@@ -295,7 +295,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // XADD or YADD
-  public void strech(int op) {
+  private void strech(int op) {
     int[] seam;
     Color[] pixels;
     splitFlag = true;
@@ -314,7 +314,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // XSUB or YSUB
-  public void compress(int op) {
+  private void compress(int op) {
     int[] seam;
     Color[] pixels;
     if (splitFlag) {
@@ -334,6 +334,7 @@ public class SeamCarver implements ISeamCarver {
     undoPixelsStack.push(pixels);
   }
 
+  @Override
   public void operate(int op) {
     if (op == XADD || op == YADD) {
       strech(op);
@@ -347,6 +348,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // true for undo, false for redo
+  @Override
   public void undo(boolean undo) {
     Stack<Integer> opStackFrom = undo ? undoStack : redoStack;
     Stack<Integer> opStackTo = undo ? redoStack : undoStack;
@@ -381,12 +383,14 @@ public class SeamCarver implements ISeamCarver {
   }
 
   @Override
-  public void addMask(int[] mask) {
-    // TODO
+  public void setMask(double[][] mask) {
+    this.mask = new double[height][width];
+    for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) this.mask[y][x] = mask[y][x];
+    maskFlag = true;
   }
 
   @Override
   public void removeMask() {
-    // TODO
+    maskFlag = false;
   }
 }
