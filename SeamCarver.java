@@ -58,15 +58,11 @@ public class SeamCarver implements ISeamCarver {
 
   // energy of pixel at column x and row y
   private double energy(int x, int y) {
-    if (x == 0 || y == 0 || x == width - 1 || y == height - 1) {
-      return 1000;
-    }
-
+    if (x == 0 || y == 0 || x == width - 1 || y == height - 1) return 1000;
     Color top = picture.get(x, y + 1);
     Color bottom = picture.get(x, y - 1);
     Color left = picture.get(x - 1, y);
     Color right = picture.get(x + 1, y);
-
     return Math.sqrt(Utils.deltaSquare(top, bottom) + Utils.deltaSquare(left, right));
   }
 
@@ -74,22 +70,16 @@ public class SeamCarver implements ISeamCarver {
     energyMap = new double[height][width];
     Utils.parallel(
         (cpu, cpus) -> {
-          for (int y = cpu; y < height; y += cpus) {
-            for (int x = 0; x < width; x++) {
-              energyMap[y][x] = energy(x, y);
-            }
-          }
+          for (int y = cpu; y < height; y += cpus)
+            for (int x = 0; x < width; x++) energyMap[y][x] = energy(x, y);
         });
   }
 
   private void maskMap() {
     Utils.parallel(
         (cpu, cpus) -> {
-          for (int y = cpu; y < height; y += cpus) {
-            for (int x = 0; x < width; x++) {
-              maskedEnergyMap[y][x] = energyMap[y][x] + mask[y][x];
-            }
-          }
+          for (int y = cpu; y < height; y += cpus)
+            for (int x = 0; x < width; x++) maskedEnergyMap[y][x] = energyMap[y][x] + mask[y][x];
         });
   }
 
@@ -99,12 +89,9 @@ public class SeamCarver implements ISeamCarver {
     traceMatrix = new int[height][width];
     if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
-
-    for (int x = 0; x < width; x++) {
-      Vcost[0][x] = maskedEnergyMap[0][x];
-    }
-    for (int y = 1; y < height; y++) {
-      for (int x = 0; x < width; x++) {
+    for (int x = 0; x < width; x++) Vcost[0][x] = maskedEnergyMap[0][x];
+    for (int y = 1; y < height; y++)
+      for (int x = 0; x < width; x++)
         if (x == 0) {
           traceMatrix[y][x] = Vcost[y - 1][x] < Vcost[y - 1][x + 1] ? 0 : 1;
           Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
@@ -116,8 +103,6 @@ public class SeamCarver implements ISeamCarver {
               Utils.minIndex(Vcost[y - 1][x - 1], Vcost[y - 1][x], Vcost[y - 1][x + 1]);
           Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         }
-      }
-    }
   }
 
   // calculate Hcost matrix
@@ -126,12 +111,9 @@ public class SeamCarver implements ISeamCarver {
     traceMatrix = new int[height][width];
     if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
-
-    for (int y = 0; y < height; y++) {
-      Hcost[y][0] = maskedEnergyMap[y][0];
-    }
-    for (int x = 1; x < width; x++) {
-      for (int y = 0; y < height; y++) {
+    for (int y = 0; y < height; y++) Hcost[y][0] = maskedEnergyMap[y][0];
+    for (int x = 1; x < width; x++)
+      for (int y = 0; y < height; y++)
         if (y == 0) {
           traceMatrix[y][x] = Hcost[y][x - 1] < Hcost[y + 1][x - 1] ? 0 : 1;
           Hcost[y][x] = maskedEnergyMap[y][x] + Hcost[y + traceMatrix[y][x]][x - 1];
@@ -143,8 +125,6 @@ public class SeamCarver implements ISeamCarver {
               Utils.minIndex(Hcost[y - 1][x - 1], Hcost[y][x - 1], Hcost[y + 1][x - 1]);
           Hcost[y][x] = maskedEnergyMap[y][x] + Hcost[y + traceMatrix[y][x]][x - 1];
         }
-      }
-    }
   }
 
   // trace back the Vcost matrix to find the lowest energy seam
@@ -152,16 +132,13 @@ public class SeamCarver implements ISeamCarver {
     int[] seam = new int[height];
     int index = 0;
     double min = Vcost[height - 1][0];
-    for (int x = 1; x < width; x++) {
+    for (int x = 1; x < width; x++)
       if (Vcost[height - 1][x] < min) {
         min = Vcost[height - 1][x];
         index = x;
       }
-    }
     seam[height - 1] = index;
-    for (int y = height - 2; y >= 0; y--) {
-      seam[y] = seam[y + 1] + traceMatrix[y + 1][seam[y + 1]];
-    }
+    for (int y = height - 2; y >= 0; y--) seam[y] = seam[y + 1] + traceMatrix[y + 1][seam[y + 1]];
     return seam;
   }
 
@@ -170,16 +147,13 @@ public class SeamCarver implements ISeamCarver {
     int[] seam = new int[width];
     int index = 0;
     double min = Hcost[0][width - 1];
-    for (int y = 1; y < height; y++) {
+    for (int y = 1; y < height; y++)
       if (Hcost[y][width - 1] < min) {
         min = Hcost[y][width - 1];
         index = y;
       }
-    }
     seam[width - 1] = index;
-    for (int x = width - 2; x >= 0; x--) {
-      seam[x] = seam[x + 1] + traceMatrix[seam[x + 1]][x + 1];
-    }
+    for (int x = width - 2; x >= 0; x--) seam[x] = seam[x + 1] + traceMatrix[seam[x + 1]][x + 1];
     return seam;
   }
 
@@ -189,15 +163,13 @@ public class SeamCarver implements ISeamCarver {
       Picture newPicture = new Picture(width + 1, height);
       Utils.parallel(
           (cpu, cpus) -> {
-            for (int y = cpu; y < height; y += cpus) {
-              for (int x = 0; x < width; x++) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++)
                 if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
                 else if (x == seam[y]) {
                   newPicture.set(x, y, pixels[y]);
                   newPicture.set(x + 1, y, picture.get(x, y));
                 } else newPicture.set(x + 1, y, picture.get(x, y));
-              }
-            }
           });
       picture = newPicture;
       width++;
@@ -205,15 +177,13 @@ public class SeamCarver implements ISeamCarver {
       Picture newPicture = new Picture(width, height + 1);
       Utils.parallel(
           (cpu, cpus) -> {
-            for (int x = cpu; x < width; x += cpus) {
-              for (int y = 0; y < height; y++) {
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
                 if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
                 else if (y == seam[x]) {
                   newPicture.set(x, y, pixels[x]);
                   newPicture.set(x, y + 1, picture.get(x, y));
                 } else newPicture.set(x, y + 1, picture.get(x, y));
-              }
-            }
           });
       picture = newPicture;
       height++;
@@ -228,15 +198,11 @@ public class SeamCarver implements ISeamCarver {
       Picture newPicture = new Picture(width - 1, height);
       Utils.parallel(
           (cpu, cpus) -> {
-            for (int y = cpu; y < height; y += cpus) {
-              for (int x = 0; x < width; x++) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++)
                 if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
                 else if (x > seam[y]) newPicture.set(x - 1, y, picture.get(x, y));
-                else {
-                  pixels[y] = picture.get(x, y);
-                }
-              }
-            }
+                else pixels[y] = picture.get(x, y);
           });
       picture = newPicture;
       width--;
@@ -244,15 +210,11 @@ public class SeamCarver implements ISeamCarver {
       Picture newPicture = new Picture(width, height - 1);
       Utils.parallel(
           (cpu, cpus) -> {
-            for (int x = cpu; x < width; x += cpus) {
-              for (int y = 0; y < height; y++) {
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
                 if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
                 else if (y > seam[x]) newPicture.set(x, y - 1, picture.get(x, y));
-                else {
-                  pixels[x] = picture.get(x, y);
-                }
-              }
-            }
+                else pixels[x] = picture.get(x, y);
           });
       picture = newPicture;
       height--;
@@ -263,131 +225,92 @@ public class SeamCarver implements ISeamCarver {
 
   private void updateEnergyMap(int op, int[] seam) {
     double[][] newEnergyMap = new double[height][width];
-
     Utils.parallel(
         (cpu, cpus) -> {
           if (op == XADD) {
-            for (int y = cpu; y < height; y += cpus) {
-              for (int x = 0; x < width; x++) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++)
                 if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
                 else if (x > seam[y] + 1) newEnergyMap[y][x] = energyMap[y][x - 1];
                 else newEnergyMap[y][x] = splitFlag ? energyMap[y][seam[y]] + 1000 : energy(x, y);
-              }
-            }
           } else if (op == XSUB) {
-            for (int y = cpu; y < height; y += cpus) {
-              for (int x = 0; x < width; x++) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++)
                 if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
                 else if (x > seam[y]) newEnergyMap[y][x] = energyMap[y][x + 1];
                 else newEnergyMap[y][x] = energy(x, y);
-              }
-            }
+
           } else if (op == YADD) {
-            for (int x = cpu; x < width; x += cpus) {
-              for (int y = 0; y < height; y++) {
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
                 if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
                 else if (y > seam[x] + 1) newEnergyMap[y][x] = energyMap[y - 1][x];
                 else newEnergyMap[y][x] = splitFlag ? energyMap[seam[x]][x] + 1000 : energy(x, y);
-              }
-            }
+
           } else {
-            for (int x = cpu; x < width; x += cpus) {
-              for (int y = 0; y < height; y++) {
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
                 if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
                 else if (y > seam[x]) newEnergyMap[y][x] = energyMap[y + 1][x];
                 else newEnergyMap[y][x] = energy(x, y);
-              }
-            }
           }
         });
-
-    // if (op == XADD) {
-    //   for (int y = 0; y < height; y++)
-    //     for (int x = 0; x < width; x++)
-    //       if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
-    //       else if (x > seam[y] + 1) newEnergyMap[y][x] = energyMap[y][x - 1];
-    //       else newEnergyMap[y][x] = splitFlag ? energyMap[y][seam[y]] + 1000 : energy(x, y);
-    // } else if (op == XSUB) {
-    //   for (int y = 0; y < height; y++)
-    //     for (int x = 0; x < width; x++)
-    //       if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
-    //       else if (x > seam[y]) newEnergyMap[y][x] = energyMap[y][x + 1];
-    //       else newEnergyMap[y][x] = energy(x, y);
-    // } else if (op == YADD) {
-    //   for (int x = 0; x < width; x++)
-    //     for (int y = 0; y < height; y++)
-    //       if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
-    //       else if (y > seam[x] + 1) newEnergyMap[y][x] = energyMap[y - 1][x];
-    //       else newEnergyMap[y][x] = splitFlag ? energyMap[seam[x]][x] + 1000 : energy(x, y);
-
-    // } else {
-    //   for (int x = 0; x < width; x++)
-    //     for (int y = 0; y < height; y++)
-    //       if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
-    //       else if (y > seam[x]) newEnergyMap[y][x] = energyMap[y + 1][x];
-    //       else newEnergyMap[y][x] = energy(x, y);
-    // }
     energyMap = newEnergyMap;
   }
 
-  private Color[] findPixels(int op, int[] seam) {
-    Color left;
-    Color top;
-    Color here;
-    Color avg;
-    Color[] pixels = new Color[(op == XADD) ? height : width];
-    if (op == XADD) {
-      for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-          if (x == seam[y]) {
-            if (x == 0) left = picture.get(x, y);
-            else left = picture.get(x - 1, y);
-            here = picture.get(x, y);
-            avg =
-                new Color(
-                    (left.getRed() + here.getRed()) / 2,
-                    (left.getGreen() + here.getGreen()) / 2,
-                    (left.getBlue() + here.getBlue()) / 2);
-            pixels[y] = avg;
-          }
-        }
-      }
+  /*
+  direct = true: get the average color of the left and the current pixel
+  direct = false: get the average color of the top and the current pixel
+  */
+  private Color getAvgColor(boolean direct, int x, int y) {
+    Color here = picture.get(x, y);
+    if (direct) {
+      Color left = (x == 0) ? picture.get(x, y) : picture.get(x - 1, y);
+      return new Color(
+          (left.getRed() + here.getRed()) / 2,
+          (left.getGreen() + here.getGreen()) / 2,
+          (left.getBlue() + here.getBlue()) / 2);
     } else {
-      for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-          if (y == seam[x]) {
-            if (y == 0) top = picture.get(x, y);
-            else top = picture.get(x, y - 1);
-            here = picture.get(x, y);
-            avg =
-                new Color(
-                    (top.getRed() + here.getRed()) / 2,
-                    (top.getGreen() + here.getGreen()) / 2,
-                    (top.getBlue() + here.getBlue()) / 2);
-            pixels[x] = avg;
-          }
-        }
-      }
+      Color top = (y == 0) ? picture.get(x, y) : picture.get(x, y - 1);
+      return new Color(
+          (top.getRed() + here.getRed()) / 2,
+          (top.getGreen() + here.getGreen()) / 2,
+          (top.getBlue() + here.getBlue()) / 2);
     }
+  }
+
+  private Color[] findPixels(int op, int[] seam) {
+    Color[] pixels = new Color[(op == XADD) ? height : width];
+    Utils.parallel(
+        (cpu, cpus) -> {
+          if (op == XADD) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++) if (x == seam[y]) pixels[y] = getAvgColor(true, x, y);
+          } else
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
+                if (y == seam[x]) pixels[x] = getAvgColor(false, x, y);
+        });
     return pixels;
   }
 
   // XADD or YADD
   public void strech(int op) {
+    int[] seam;
+    Color[] pixels;
     splitFlag = true;
     if (op == XADD) {
       calVcost();
-      int[] seam = findVseam();
-      Color[] pixels = findPixels(op, seam);
+      seam = findVseam();
+      pixels = findPixels(op, seam);
       insertPixels(op, seam, pixels);
-      undoSeamsStack.push(seam);
     } else {
       calHcost();
-      int[] seam = findHseam();
-      Color[] pixels = findPixels(op, seam);
+      seam = findHseam();
+      pixels = findPixels(op, seam);
       insertPixels(op, seam, pixels);
-      undoSeamsStack.push(seam);
     }
+    undoSeamsStack.push(seam);
   }
 
   // XSUB or YSUB

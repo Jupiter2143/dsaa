@@ -11,11 +11,11 @@ public class Test {
     System.out.println("Hello World");
     SeamCarver seamCarver = new SeamCarver(new Picture("example.jpg"));
     seamCarver.picture().show();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 400; i++) {
       seamCarver.operate(XSUB);
-      seamCarver.operate(YSUB);
-      seamCarver.operate(XADD);
-      seamCarver.operate(YADD);
+      // seamCarver.operate(YSUB);
+      // seamCarver.operate(XADD);
+      // seamCarver.operate(YADD);
     }
     seamCarver.picture().show();
     // for (int i = 0; i < 400; i++) seamCarver.operate(YADD);
