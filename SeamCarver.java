@@ -260,30 +260,36 @@ public class SeamCarver {
 
   private void updateEnergyMap(int op, int[] seam) {
     double[][] newEnergyMap = new double[height][width];
+    double midEnergy = splitFlag ? 1000 : 0;
+    double sideEnergy = splitFlag ? 500 : 0;
     if (op == XADD) {
       for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
           if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (x > seam[y] + 1) newEnergyMap[y][x] = energyMap[y][x - 1];
-          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
+          else if (x == seam[y] - 1) newEnergyMap[y][x] = energy(x, y) + sideEnergy;
+          else if (x == seam[y]) newEnergyMap[y][x] = energy(x, y) + midEnergy;
+          else newEnergyMap[y][x] = energy(x, y) + sideEnergy;
     } else if (op == XSUB) {
       for (int y = 0; y < height; y++)
         for (int x = 0; x < width; x++)
           if (x < seam[y] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (x > seam[y]) newEnergyMap[y][x] = energyMap[y][x + 1];
-          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
+          else newEnergyMap[y][x] = energy(x, y);
     } else if (op == YADD) {
       for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
           if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (y > seam[x] + 1) newEnergyMap[y][x] = energyMap[y - 1][x];
-          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
+          else if (y == seam[x] - 1) newEnergyMap[y][x] = energy(x, y) + sideEnergy;
+          else if (y == seam[x]) newEnergyMap[y][x] = energy(x, y) + midEnergy;
+          else newEnergyMap[y][x] = energy(x, y) + sideEnergy;
     } else {
       for (int x = 0; x < width; x++)
         for (int y = 0; y < height; y++)
           if (y < seam[x] - 1) newEnergyMap[y][x] = energyMap[y][x];
           else if (y > seam[x]) newEnergyMap[y][x] = energyMap[y + 1][x];
-          else newEnergyMap[y][x] = splitFlag ? 9e9 : energy(x, y);
+          else newEnergyMap[y][x] = energy(x, y);
     }
     energyMap = newEnergyMap;
   }
@@ -294,6 +300,7 @@ public class SeamCarver {
     Color top;
     Color here;
     Color avg;
+    splitFlag = true;
     if (op == XADD) {
       Color[] pixels = new Color[height];
       calVcost();
@@ -314,7 +321,6 @@ public class SeamCarver {
           }
         }
       }
-      splitFlag = true;
       insertPixels(op, seam, pixels);
       undoSeamsStack.push(seam);
     } else {
@@ -337,7 +343,6 @@ public class SeamCarver {
           }
         }
       }
-      splitFlag = true;
       insertPixels(op, seam, pixels);
       undoSeamsStack.push(seam);
     }
@@ -347,6 +352,10 @@ public class SeamCarver {
   public void compress(int op) {
     int[] seam;
     Color[] pixels;
+    if (splitFlag) {
+      calEnergyMap();
+      splitFlag = false;
+    }
     if (op == XSUB) {
       calVcost();
       seam = findVseam(1);
@@ -367,7 +376,7 @@ public class SeamCarver {
       compress(op);
     }
     undoStack.push(op);
-    if (undoStack.size() > 50) {
+    if (undoStack.size() > 1000) {
       undoStack.remove(0);
     }
     redoStack.clear();
@@ -386,21 +395,20 @@ public class SeamCarver {
     Stack<int[]> seamsStacksTo = undo ? redoSeamsStack : undoSeamsStack;
     Stack<Color[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
     int op = opStack.pop();
-    boolean direction = (op == XADD || op == XSUB);
+    int invOp = ~op & 0b11;
     boolean add = (op == XADD || op == YADD);
+    int[] seam = seamsStacksFrom.pop();
     if (undo ^ add) {
       // undo compress or redo strech
       // insert the seam
-      int[] seam = seamsStacksFrom.pop();
       Color[] pixels = pixelsStackFrom.pop();
-      insertPixels(op, seam, pixels);
+      insertPixels(invOp, seam, pixels);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     } else {
       // undo strech or redo compress
       // remove the seam
-      int[] seam = seamsStacksFrom.pop();
-      Color[] pixels = removePixels(op, seam);
+      Color[] pixels = removePixels(invOp, seam);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     }

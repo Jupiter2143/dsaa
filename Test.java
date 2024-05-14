@@ -10,13 +10,12 @@ public class Test {
   public static void main(String[] args) {
     System.out.println("Hello World");
     SeamCarver seamCarver = new SeamCarver(new Picture("example.jpg"));
-    Picture picture = seamCarver.picture();
-    picture.show();
-    for (int i = 0; i < 400; i++) {
-      seamCarver.operate(XADD);
-    }
-    Picture newPicture = seamCarver.picture();
-    // seamCarver.printEnergyMap();
-    newPicture.show();
+    seamCarver.picture().show();
+    for (int i = 0; i < 400; i++) seamCarver.operate(XADD);
+    seamCarver.picture().show();
+    for (int i = 0; i < 400; i++) seamCarver.operate(XSUB);
+    seamCarver.picture().show();
+    for (int i = 0; i < 400; i++) seamCarver.undo(true);
+    seamCarver.picture().show();
   }
 }
