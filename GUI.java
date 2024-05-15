@@ -13,14 +13,10 @@ public class GUI {
   private JFrame frame = new JFrame("Seam Carver");
   private SeamCarver seamCarver = new SeamCarver("example2.jpg");
   private JPanel panel = new JPanel();
-  private JScrollPane scrollPane;
-  private JPanel rightPanel = new JPanel();
-  private ImageIcon imageIcon;
-  private JLabel label;
-  private JPanel h1 = new JPanel();
+  private JLabel label = new JLabel();
   private JSpinner wSpinner;
   private JSpinner hSpinner;
-  private JButton resizeButton;
+  private ImageIcon imageIcon;
 
   public GUI() {
     initMainWindow();
@@ -50,18 +46,20 @@ public class GUI {
   private void initScrollPane() {
     imageIcon = new ImageIcon(seamCarver.picture());
     label = new JLabel(imageIcon);
-    scrollPane = new JScrollPane(label);
+    JScrollPane scrollPane = new JScrollPane(label);
     panel.add(scrollPane, BorderLayout.CENTER);
   }
 
   private void initRightPanel() {
+    JPanel rightPanel = new JPanel();
     rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
-    inith1();
-    initButtons();
+    inith1(rightPanel);
+    initButtons(rightPanel);
     panel.add(rightPanel, BorderLayout.EAST);
   }
 
-  private void inith1() {
+  private void inith1(JPanel rightPanel) {
+    JPanel h1 = new JPanel();
     h1.setLayout(new BoxLayout(h1, BoxLayout.X_AXIS));
     h1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
     int originW = seamCarver.width();
@@ -95,8 +93,8 @@ public class GUI {
     rightPanel.add(h1);
   }
 
-  private void initButtons() {
-    resizeButton = new JButton("Resize");
+  private void initButtons(JPanel rightPanel) {
+    JButton resizeButton = new JButton("Resize");
     resizeButton.addActionListener(
         new ActionListener() {
           @Override
