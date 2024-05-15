@@ -1,11 +1,11 @@
 // Utils contain a collection of useful methods that are used throughout the program
-import java.awt.Color;
 
 public class Utils {
-  public static double deltaSquare(Color a, Color b) {
-    return Math.pow(a.getRed() - b.getRed(), 2)
-        + Math.pow(a.getGreen() - b.getGreen(), 2)
-        + Math.pow(a.getBlue() - b.getBlue(), 2);
+  public static int deltaSquare(int a, int b) {
+    int deltaRed = ((a >> 16) & 0xFF) - ((b >> 16) & 0xFF);
+    int deltaGreen = ((a >> 8) & 0xFF) - ((b >> 8) & 0xFF);
+    int deltaBlue = (a & 0xFF) - (b & 0xFF);
+    return deltaRed * deltaRed + deltaGreen * deltaGreen + deltaBlue * deltaBlue;
   }
 
   public static int minIndex(double a, double b, double c) {
@@ -22,6 +22,19 @@ public class Utils {
         return 1;
       }
     }
+  }
+
+  public static int avgColor(int a, int b) {
+    int a_r = (a >> 16) & 0xFF;
+    int a_g = (a >> 8) & 0xFF;
+    int a_b = a & 0xFF;
+    int b_r = (b >> 16) & 0xFF;
+    int b_g = (b >> 8) & 0xFF;
+    int b_b = b & 0xFF;
+    int r = (a_r + b_r) / 2;
+    int g = (a_g + b_g) / 2;
+    int c = (a_b + b_b) / 2;
+    return (r << 16) | (g << 8) | c;
   }
 
   interface ParallelFunc {

@@ -1,4 +1,5 @@
-import edu.princeton.cs.algs4.Picture;
+// import edu.princeton.cs.algs4.Picture;
+import java.awt.image.BufferedImage; // no longer use edu.princeton.cs.algs4.Picture
 
 interface ISeamCarver {
   // Returns the width of the current image.
@@ -8,10 +9,11 @@ interface ISeamCarver {
   int height();
 
   // get picture
-  Picture picture();
+  // Picture picture();
+  BufferedImage picture();
 
   // add mask to protect some pixels or try to remove some pixels
-  void setMask(double[][] mask);
+  void setMask(float[][] mask);
 
   // remove mask
   void removeMask();
@@ -21,4 +23,9 @@ interface ISeamCarver {
 
   // undo: true for undo, false for redo
   public void undo(boolean undo);
+
+  //
+  // public void restore();
+
+  public void save(String filename);
 }

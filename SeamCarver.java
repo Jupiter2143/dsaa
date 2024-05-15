@@ -1,17 +1,19 @@
-import edu.princeton.cs.algs4.Picture;
-import java.awt.Color;
+// import edu.princeton.cs.algs4.Picture;
+import java.awt.image.BufferedImage; // no longer use edu.princeton.cs.algs4.Picture
+import java.io.File;
 import java.util.Stack;
+import javax.imageio.ImageIO;
 
 public class SeamCarver implements ISeamCarver {
-  private Picture picture;
-  private Picture originPicture; // original picture
-  private double[][] energyMap; // energy map, 2d array to store the energy of the pixel
-  private double[][] mask;
+  private BufferedImage picture;
+  private BufferedImage originPicture; // original picture
+  private float[][] energyMap; // energy map, 2d array to store the energy of the pixel
+  private float[][] mask;
   private boolean maskFlag = false;
   private boolean splitFlag = false;
-  private double[][] maskedEnergyMap;
-  private double[][] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
-  private double[][] Hcost; // 2d cumulative energy matrix to store the cost of the horizontal seam
+  private float[][] maskedEnergyMap;
+  private float[][] Vcost; // 2d cumulative energy matrix to store the cost of the vertical seam
+  private float[][] Hcost; // 2d cumulative energy matrix to store the cost of the horizontal seam
   private int[][] traceMatrix; // 2d matrix to store the trace of the seam
   private int width;
   private int height;
@@ -20,29 +22,31 @@ public class SeamCarver implements ISeamCarver {
   private final Stack<Integer> redoStack = new Stack<>();
   private final Stack<int[]> undoSeamsStack = new Stack<>();
   private final Stack<int[]> redoSeamsStack = new Stack<>();
-  private final Stack<Color[]> undoPixelsStack = new Stack<>();
-  private final Stack<Color[]> redoPixelsStack = new Stack<>();
+  private final Stack<int[]> undoPixelsStack = new Stack<>();
+  private final Stack<int[]> redoPixelsStack = new Stack<>();
   // The oprands for the operation
   private static final int XADD = 0b00;
   private static final int YADD = 0b01;
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
 
-  // create a seam carver object based on the given picture
-  public SeamCarver(Picture picture) {
-    this.originPicture = new Picture(picture);
-    this.picture = new Picture(picture);
-    this.width = picture.width();
-    this.height = picture.height();
-    calEnergyMap();
+  public SeamCarver(String filename) {
+    try {
+      BufferedImage picture = ImageIO.read(new File(filename));
+      // SeamCarver(picture);
+      this.originPicture = picture;
+      this.picture = picture;
+      this.width = picture.getWidth();
+      this.height = picture.getHeight();
+      calEnergyMap();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   // current picture
   @Override
-  public Picture picture() {
-    if (this.picture == null) {
-      throw new IllegalArgumentException("Picture is null");
-    }
+  public BufferedImage picture() {
     return this.picture;
   }
 
@@ -57,17 +61,17 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // energy of pixel at column x and row y
-  private double energy(int x, int y) {
+  private float energy(int x, int y) {
     if (x == 0 || y == 0 || x == width - 1 || y == height - 1) return 1000;
-    Color top = picture.get(x, y + 1);
-    Color bottom = picture.get(x, y - 1);
-    Color left = picture.get(x - 1, y);
-    Color right = picture.get(x + 1, y);
-    return Math.sqrt(Utils.deltaSquare(top, bottom) + Utils.deltaSquare(left, right));
+    int top = picture.getRGB(x, y + 1);
+    int bottom = picture.getRGB(x, y - 1);
+    int left = picture.getRGB(x - 1, y);
+    int right = picture.getRGB(x + 1, y);
+    return (float) Math.sqrt(Utils.deltaSquare(top, bottom) + Utils.deltaSquare(left, right));
   }
 
   private void calEnergyMap() {
-    energyMap = new double[height][width];
+    energyMap = new float[height][width];
     Utils.parallel(
         (cpu, cpus) -> {
           for (int y = cpu; y < height; y += cpus)
@@ -85,7 +89,7 @@ public class SeamCarver implements ISeamCarver {
 
   // calculate Vcost matrix
   private void calVcost() {
-    Vcost = new double[height][width];
+    Vcost = new float[height][width];
     traceMatrix = new int[height][width];
     if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
@@ -107,7 +111,7 @@ public class SeamCarver implements ISeamCarver {
 
   // calculate Hcost matrix
   private void calHcost() {
-    Hcost = new double[height][width];
+    Hcost = new float[height][width];
     traceMatrix = new int[height][width];
     if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
@@ -131,7 +135,7 @@ public class SeamCarver implements ISeamCarver {
   private int[] findVseam() {
     int[] seam = new int[height];
     int index = 0;
-    double min = Vcost[height - 1][0];
+    float min = Vcost[height - 1][0];
     for (int x = 1; x < width; x++)
       if (Vcost[height - 1][x] < min) {
         min = Vcost[height - 1][x];
@@ -146,7 +150,7 @@ public class SeamCarver implements ISeamCarver {
   private int[] findHseam() {
     int[] seam = new int[width];
     int index = 0;
-    double min = Hcost[0][width - 1];
+    float min = Hcost[0][width - 1];
     for (int y = 1; y < height; y++)
       if (Hcost[y][width - 1] < min) {
         min = Hcost[y][width - 1];
@@ -158,32 +162,44 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // XADD or YADD
-  private void insertPixels(int op, int[] seam, Color[] pixels) {
+  private void insertPixels(int op, int[] seam, int[] pixels) {
     if (op == XADD) {
-      Picture newPicture = new Picture(width + 1, height);
+      // Picture newPicture = new Picture(width + 1, height);
+      BufferedImage newPicture = new BufferedImage(width + 1, height, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int y = cpu; y < height; y += cpus)
               for (int x = 0; x < width; x++)
-                if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
+                // if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
+                // else if (x == seam[y]) {
+                //   newPicture.set(x, y, pixels[y]);
+                //   newPicture.set(x + 1, y, picture.get(x, y));
+                // } else newPicture.set(x + 1, y, picture.get(x, y));
+                if (x < seam[y]) newPicture.setRGB(x, y, picture.getRGB(x, y));
                 else if (x == seam[y]) {
-                  newPicture.set(x, y, pixels[y]);
-                  newPicture.set(x + 1, y, picture.get(x, y));
-                } else newPicture.set(x + 1, y, picture.get(x, y));
+                  newPicture.setRGB(x, y, pixels[y]);
+                  newPicture.setRGB(x + 1, y, picture.getRGB(x, y));
+                } else newPicture.setRGB(x + 1, y, picture.getRGB(x, y));
           });
       picture = newPicture;
       width++;
     } else {
-      Picture newPicture = new Picture(width, height + 1);
+      // Picture newPicture = new Picture(width, height + 1);
+      BufferedImage newPicture = new BufferedImage(width, height + 1, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int x = cpu; x < width; x += cpus)
               for (int y = 0; y < height; y++)
-                if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
+                // if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
+                // else if (y == seam[x]) {
+                //   newPicture.set(x, y, pixels[x]);
+                //   newPicture.set(x, y + 1, picture.get(x, y));
+                // } else newPicture.set(x, y + 1, picture.get(x, y));
+                if (y < seam[x]) newPicture.setRGB(x, y, picture.getRGB(x, y));
                 else if (y == seam[x]) {
-                  newPicture.set(x, y, pixels[x]);
-                  newPicture.set(x, y + 1, picture.get(x, y));
-                } else newPicture.set(x, y + 1, picture.get(x, y));
+                  newPicture.setRGB(x, y, pixels[x]);
+                  newPicture.setRGB(x, y + 1, picture.getRGB(x, y));
+                } else newPicture.setRGB(x, y + 1, picture.getRGB(x, y));
           });
       picture = newPicture;
       height++;
@@ -192,29 +208,38 @@ public class SeamCarver implements ISeamCarver {
   }
 
   // XSUB or YSUB
-  private Color[] removePixels(int op, int[] seam) {
-    Color[] pixels = new Color[(op == XSUB) ? height : width];
+  private int[] removePixels(int op, int[] seam) {
+    // int[] pixels = new Color[(op == XSUB) ? height : width];
+    int[] pixels = new int[(op == XSUB) ? height : width];
     if (op == XSUB) {
-      Picture newPicture = new Picture(width - 1, height);
+      // Picture newPicture = new Picture(width - 1, height);
+      BufferedImage newPicture = new BufferedImage(width - 1, height, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int y = cpu; y < height; y += cpus)
               for (int x = 0; x < width; x++)
-                if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
-                else if (x > seam[y]) newPicture.set(x - 1, y, picture.get(x, y));
-                else pixels[y] = picture.get(x, y);
+                // if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
+                // else if (x > seam[y]) newPicture.set(x - 1, y, picture.get(x, y));
+                // else pixels[y] = picture.get(x, y);
+                if (x < seam[y]) newPicture.setRGB(x, y, picture.getRGB(x, y));
+                else if (x > seam[y]) newPicture.setRGB(x - 1, y, picture.getRGB(x, y));
+                else pixels[y] = picture.getRGB(x, y);
           });
       picture = newPicture;
       width--;
     } else {
-      Picture newPicture = new Picture(width, height - 1);
+      // Picture newPicture = new Picture(width, height - 1);
+      BufferedImage newPicture = new BufferedImage(width, height - 1, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int x = cpu; x < width; x += cpus)
               for (int y = 0; y < height; y++)
-                if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
-                else if (y > seam[x]) newPicture.set(x, y - 1, picture.get(x, y));
-                else pixels[x] = picture.get(x, y);
+                // if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
+                // else if (y > seam[x]) newPicture.set(x, y - 1, picture.get(x, y));
+                // else pixels[x] = picture.get(x, y);
+                if (y < seam[x]) newPicture.setRGB(x, y, picture.getRGB(x, y));
+                else if (y > seam[x]) newPicture.setRGB(x, y - 1, picture.getRGB(x, y));
+                else pixels[x] = picture.getRGB(x, y);
           });
       picture = newPicture;
       height--;
@@ -224,7 +249,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   private void updateEnergyMap(int op, int[] seam) {
-    double[][] newEnergyMap = new double[height][width];
+    float[][] newEnergyMap = new float[height][width];
     Utils.parallel(
         (cpu, cpus) -> {
           if (op == XADD) {
@@ -262,25 +287,34 @@ public class SeamCarver implements ISeamCarver {
   direct = true: get the average color of the left and the current pixel
   direct = false: get the average color of the top and the current pixel
   */
-  private Color getAvgColor(boolean direct, int x, int y) {
-    Color here = picture.get(x, y);
+  private int getAvgColor(boolean direct, int x, int y) {
+    // Color here = picture.get(x, y);
+    // if (direct) {
+    //   Color left = (x == 0) ? picture.get(x, y) : picture.get(x - 1, y);
+    //   return new Color(
+    //       (left.getRed() + here.getRed()) / 2,
+    //       (left.getGreen() + here.getGreen()) / 2,
+    //       (left.getBlue() + here.getBlue()) / 2);
+    // } else {
+    //   Color top = (y == 0) ? picture.get(x, y) : picture.get(x, y - 1);
+    //   return new Color(
+    //       (top.getRed() + here.getRed()) / 2,
+    //       (top.getGreen() + here.getGreen()) / 2,
+    //       (top.getBlue() + here.getBlue()) / 2);
+    // }
+    int here = picture.getRGB(x, y);
     if (direct) {
-      Color left = (x == 0) ? picture.get(x, y) : picture.get(x - 1, y);
-      return new Color(
-          (left.getRed() + here.getRed()) / 2,
-          (left.getGreen() + here.getGreen()) / 2,
-          (left.getBlue() + here.getBlue()) / 2);
+      int left = (x == 0) ? picture.getRGB(x, y) : picture.getRGB(x - 1, y);
+      return Utils.avgColor(left, here);
     } else {
-      Color top = (y == 0) ? picture.get(x, y) : picture.get(x, y - 1);
-      return new Color(
-          (top.getRed() + here.getRed()) / 2,
-          (top.getGreen() + here.getGreen()) / 2,
-          (top.getBlue() + here.getBlue()) / 2);
+      int top = (y == 0) ? picture.getRGB(x, y) : picture.getRGB(x, y - 1);
+      return Utils.avgColor(top, here);
     }
   }
 
-  private Color[] findPixels(int op, int[] seam) {
-    Color[] pixels = new Color[(op == XADD) ? height : width];
+  private int[] findPixels(int op, int[] seam) {
+    // Color[] pixels = new Color[(op == XADD) ? height : width];
+    int[] pixels = new int[(op == XADD) ? height : width];
     Utils.parallel(
         (cpu, cpus) -> {
           if (op == XADD) {
@@ -297,7 +331,8 @@ public class SeamCarver implements ISeamCarver {
   // XADD or YADD
   private void strech(int op) {
     int[] seam;
-    Color[] pixels;
+    // Color[] pixels;
+    int[] pixels;
     splitFlag = true;
     if (op == XADD) {
       calVcost();
@@ -316,7 +351,8 @@ public class SeamCarver implements ISeamCarver {
   // XSUB or YSUB
   private void compress(int op) {
     int[] seam;
-    Color[] pixels;
+    // Color[] pixels;
+    int[] pixels;
     if (splitFlag) {
       calEnergyMap();
       splitFlag = false;
@@ -356,9 +392,11 @@ public class SeamCarver implements ISeamCarver {
       return;
     }
     Stack<int[]> seamsStacksFrom = undo ? undoSeamsStack : redoSeamsStack;
-    Stack<Color[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
+    // Stack<Color[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
+    Stack<int[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
     Stack<int[]> seamsStacksTo = undo ? redoSeamsStack : undoSeamsStack;
-    Stack<Color[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
+    // Stack<Color[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
+    Stack<int[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
     int op = opStackFrom.pop();
     int invOp = ~op & 0b11;
     boolean add = (op == XADD || op == YADD);
@@ -368,14 +406,14 @@ public class SeamCarver implements ISeamCarver {
     if (undo ^ add) {
       // undo compress or redo strech: undo+XSUP or redo+XADD
       // insert the seam
-      Color[] pixels = pixelsStackFrom.pop();
+      int[] pixels = pixelsStackFrom.pop();
       insertPixels(direct ? XADD : YADD, seam, pixels);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     } else {
       // undo strech or redo compress: undo+XADD or redo+XSUB
       // remove the seam
-      Color[] pixels = removePixels(direct ? XSUB : YSUB, seam);
+      int[] pixels = removePixels(direct ? XSUB : YSUB, seam);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
     }
@@ -383,8 +421,8 @@ public class SeamCarver implements ISeamCarver {
   }
 
   @Override
-  public void setMask(double[][] mask) {
-    this.mask = new double[height][width];
+  public void setMask(float[][] mask) {
+    this.mask = new float[height][width];
     for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) this.mask[y][x] = mask[y][x];
     maskFlag = true;
   }
@@ -392,5 +430,14 @@ public class SeamCarver implements ISeamCarver {
   @Override
   public void removeMask() {
     maskFlag = false;
+  }
+
+  @Override
+  public void save(String filename) {
+    try {
+      ImageIO.write(picture, "jpg", new File(filename));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
