@@ -1,10 +1,14 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.awt.image.BufferedImage;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 
 public class GUI {
   private static final int XADD = 0b00;
@@ -19,6 +23,7 @@ public class GUI {
   private JSpinner hSpinner;
   private ImageIcon imageIcon;
   private ArrayList<Point> points = new ArrayList<>(); // 存储套索选区的所有点
+  private boolean[][] highlight;//套索内矩阵
 
   public GUI() {
     initMainWindow();
@@ -63,8 +68,11 @@ public class GUI {
                   yPoints[i] = point.y;
               }
 
-              g.setColor(Color.RED);
-              g.drawPolygon(xPoints, yPoints, points.size()); // 绘制套索选区
+              Graphics2D g2d = (Graphics2D) g.create();
+              //fillPolygon(g2d, xPoints, yPoints, points.size()); // 填充多边形内部
+              g2d.setColor(Color.RED);
+              g2d.drawPolygon(xPoints, yPoints, points.size()); // 多边形
+              g2d.dispose();
           }
       }
   };
@@ -76,30 +84,92 @@ public class GUI {
   JScrollPane scrollPane = new JScrollPane(label);
   panel.add(scrollPane, BorderLayout.CENTER);
 
+  highlight = new boolean[width][height];
+
   label.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
           points.clear(); 
           points.add(e.getPoint()); 
           label.repaint(); // 重新绘制以显示套索选区
+
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
-          points.add(e.getPoint()); // 添加最后一个点
+          points.add(e.getPoint()); // 最后一个点
           label.repaint(); 
+          //updateHighlightMatrix();
       }
   });
 
   label.addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseDragged(MouseEvent e) {
-          points.add(e.getPoint()); // 拖动时添加点
+          points.add(e.getPoint()); 
           label.repaint(); 
       }
   });
   
   }
+//多边形不太好写，想不出来也没查出来，放一个外接矩形的，留条后路
+//   private void fillPolygon(Graphics g, int[] xPoints, int[] yPoints, int nPoints) {
+//     Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
+
+//     // 边界矩形
+//     Rectangle bounds = polygon.getBounds();
+
+//     // 获取多边形内部的像素点颜色
+//     Image image = imageIcon.getImage();
+//     BufferedImage bufferedImage = toBufferedImage(image);
+
+//     for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
+//         for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
+//             if (polygon.contains(x, y)) { 
+//                 g.setColor(new Color(bufferedImage.getRGB(x, y))); // 获取像素点颜色
+//                 g.fillRect(x, y, 1, 1); // 填充像素点
+//                 highlight[x][y] = true; // 标记高亮像素点
+//             }
+//         }
+//     }
+// }
+
+// 更新高亮矩阵
+// private void updateHighlightMatrix() {
+//     for (int i = 0; i < highlight.length; i++) {
+//         for (int j = 0; j < highlight[0].length; j++) {
+//             highlight[i][j] = false;
+//         }
+//     }
+
+//     // 获取多边形内的像素点
+//     for (int x = 0; x < imageIcon.getIconWidth(); x++) {
+//         for (int y = 0; y < imageIcon.getIconHeight(); y++) {
+//             if (label.contains(x, y)) { 
+//                 if (label.contains(x + 1, y + 1)) {
+//                     if (highlight[x][y] && highlight[x + 1][y] && highlight[x][y + 1] && highlight[x + 1][y + 1]) {
+//                         highlight[x][y] = true;
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+
+// 转换Image为BufferedImage
+private BufferedImage toBufferedImage(Image image) {
+    if (image instanceof BufferedImage) {
+        return (BufferedImage) image;
+    }
+
+    BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+    Graphics2D g2d = bufferedImage.createGraphics();
+    g2d.drawImage(image, 0, 0, null);
+    g2d.dispose();
+
+    return bufferedImage;
+}
 
 
   private void initRightPanel() {
