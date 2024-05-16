@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
@@ -17,6 +18,7 @@ public class GUI {
   private JSpinner wSpinner;
   private JSpinner hSpinner;
   private ImageIcon imageIcon;
+  private ArrayList<Point> points = new ArrayList<>(); // 存储套索选区的所有点
 
   public GUI() {
     initMainWindow();
@@ -43,12 +45,62 @@ public class GUI {
     initStatusBar();
   }
 
+  //显示图、鼠标监听、套索实施
   private void initScrollPane() {
     imageIcon = new ImageIcon(seamCarver.picture());
-    label = new JLabel(imageIcon);
-    JScrollPane scrollPane = new JScrollPane(label);
-    panel.add(scrollPane, BorderLayout.CENTER);
+    
+    label = new JLabel(imageIcon) {
+      @Override
+      protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          if (!points.isEmpty()) {
+              int[] xPoints = new int[points.size()];
+              int[] yPoints = new int[points.size()];
+
+              for (int i = 0; i < points.size(); i++) {
+                  Point point = points.get(i);
+                  xPoints[i] = point.x;
+                  yPoints[i] = point.y;
+              }
+
+              g.setColor(Color.RED);
+              g.drawPolygon(xPoints, yPoints, points.size()); // 绘制套索选区
+          }
+      }
+  };
+
+  int width = imageIcon.getIconWidth();
+  int height = imageIcon.getIconHeight();
+  label.setPreferredSize(new Dimension(width, height));
+
+  JScrollPane scrollPane = new JScrollPane(label);
+  panel.add(scrollPane, BorderLayout.CENTER);
+
+  label.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+          points.clear(); 
+          points.add(e.getPoint()); 
+          label.repaint(); // 重新绘制以显示套索选区
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+          points.add(e.getPoint()); // 添加最后一个点
+          label.repaint(); 
+      }
+  });
+
+  label.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseDragged(MouseEvent e) {
+          points.add(e.getPoint()); // 拖动时添加点
+          label.repaint(); 
+      }
+  });
+  
   }
+
 
   private void initRightPanel() {
     JPanel rightPanel = new JPanel();
@@ -133,5 +185,21 @@ public class GUI {
     JLabel statusBar = new JLabel("状态栏");
     statusBar.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     frame.add(statusBar, BorderLayout.SOUTH);
+    
+    JButton selectButton = new JButton("套索工具");
+    statusBar.add(selectButton);
+    selectButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            startSelectionTool();
+        }
+    });
+    
   }
+
+  private void startSelectionTool() {
+        // 点击则弹出一个对话框，用于提示用户进行套索选区
+        JOptionPane.showMessageDialog(frame, "请在图像上用鼠标拖动进行选区。", "套索工具", JOptionPane.INFORMATION_MESSAGE);
+    }
+
 }
