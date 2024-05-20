@@ -33,7 +33,6 @@ public class SeamCarver implements ISeamCarver {
   public SeamCarver(String filename) {
     try {
       BufferedImage picture = ImageIO.read(new File(filename));
-      // SeamCarver(picture);
       this.originPicture = picture;
       this.picture = picture;
       this.width = picture.getWidth();
@@ -164,17 +163,11 @@ public class SeamCarver implements ISeamCarver {
   // XADD or YADD
   private void insertPixels(int op, int[] seam, int[] pixels) {
     if (op == XADD) {
-      // Picture newPicture = new Picture(width + 1, height);
       BufferedImage newPicture = new BufferedImage(width + 1, height, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int y = cpu; y < height; y += cpus)
               for (int x = 0; x < width; x++)
-                // if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
-                // else if (x == seam[y]) {
-                //   newPicture.set(x, y, pixels[y]);
-                //   newPicture.set(x + 1, y, picture.get(x, y));
-                // } else newPicture.set(x + 1, y, picture.get(x, y));
                 if (x < seam[y]) newPicture.setRGB(x, y, picture.getRGB(x, y));
                 else if (x == seam[y]) {
                   newPicture.setRGB(x, y, pixels[y]);
@@ -184,17 +177,11 @@ public class SeamCarver implements ISeamCarver {
       picture = newPicture;
       width++;
     } else {
-      // Picture newPicture = new Picture(width, height + 1);
       BufferedImage newPicture = new BufferedImage(width, height + 1, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int x = cpu; x < width; x += cpus)
               for (int y = 0; y < height; y++)
-                // if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
-                // else if (y == seam[x]) {
-                //   newPicture.set(x, y, pixels[x]);
-                //   newPicture.set(x, y + 1, picture.get(x, y));
-                // } else newPicture.set(x, y + 1, picture.get(x, y));
                 if (y < seam[x]) newPicture.setRGB(x, y, picture.getRGB(x, y));
                 else if (y == seam[x]) {
                   newPicture.setRGB(x, y, pixels[x]);
@@ -209,18 +196,13 @@ public class SeamCarver implements ISeamCarver {
 
   // XSUB or YSUB
   private int[] removePixels(int op, int[] seam) {
-    // int[] pixels = new Color[(op == XSUB) ? height : width];
     int[] pixels = new int[(op == XSUB) ? height : width];
     if (op == XSUB) {
-      // Picture newPicture = new Picture(width - 1, height);
       BufferedImage newPicture = new BufferedImage(width - 1, height, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
             for (int y = cpu; y < height; y += cpus)
               for (int x = 0; x < width; x++)
-                // if (x < seam[y]) newPicture.set(x, y, picture.get(x, y));
-                // else if (x > seam[y]) newPicture.set(x - 1, y, picture.get(x, y));
-                // else pixels[y] = picture.get(x, y);
                 if (x < seam[y]) newPicture.setRGB(x, y, picture.getRGB(x, y));
                 else if (x > seam[y]) newPicture.setRGB(x - 1, y, picture.getRGB(x, y));
                 else pixels[y] = picture.getRGB(x, y);
@@ -234,9 +216,6 @@ public class SeamCarver implements ISeamCarver {
           (cpu, cpus) -> {
             for (int x = cpu; x < width; x += cpus)
               for (int y = 0; y < height; y++)
-                // if (y < seam[x]) newPicture.set(x, y, picture.get(x, y));
-                // else if (y > seam[x]) newPicture.set(x, y - 1, picture.get(x, y));
-                // else pixels[x] = picture.get(x, y);
                 if (y < seam[x]) newPicture.setRGB(x, y, picture.getRGB(x, y));
                 else if (y > seam[x]) newPicture.setRGB(x, y - 1, picture.getRGB(x, y));
                 else pixels[x] = picture.getRGB(x, y);
@@ -288,20 +267,6 @@ public class SeamCarver implements ISeamCarver {
   direct = false: get the average color of the top and the current pixel
   */
   private int getAvgColor(boolean direct, int x, int y) {
-    // Color here = picture.get(x, y);
-    // if (direct) {
-    //   Color left = (x == 0) ? picture.get(x, y) : picture.get(x - 1, y);
-    //   return new Color(
-    //       (left.getRed() + here.getRed()) / 2,
-    //       (left.getGreen() + here.getGreen()) / 2,
-    //       (left.getBlue() + here.getBlue()) / 2);
-    // } else {
-    //   Color top = (y == 0) ? picture.get(x, y) : picture.get(x, y - 1);
-    //   return new Color(
-    //       (top.getRed() + here.getRed()) / 2,
-    //       (top.getGreen() + here.getGreen()) / 2,
-    //       (top.getBlue() + here.getBlue()) / 2);
-    // }
     int here = picture.getRGB(x, y);
     if (direct) {
       int left = (x == 0) ? picture.getRGB(x, y) : picture.getRGB(x - 1, y);
@@ -331,7 +296,6 @@ public class SeamCarver implements ISeamCarver {
   // XADD or YADD
   private void strech(int op) {
     int[] seam;
-    // Color[] pixels;
     int[] pixels;
     splitFlag = true;
     if (op == XADD) {
@@ -351,7 +315,6 @@ public class SeamCarver implements ISeamCarver {
   // XSUB or YSUB
   private void compress(int op) {
     int[] seam;
-    // Color[] pixels;
     int[] pixels;
     if (splitFlag) {
       calEnergyMap();

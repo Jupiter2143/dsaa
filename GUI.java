@@ -1,16 +1,11 @@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-
+import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 
 public class GUI {
   private static final int XADD = 0b00;
@@ -25,7 +20,7 @@ public class GUI {
   private JSpinner hSpinner;
   private ImageIcon imageIcon;
   private ArrayList<Point> points = new ArrayList<>(); // 存储套索选区的所有点
-  private boolean[][] highlight;//套索内矩阵
+  private boolean[][] highlight; // 套索内矩阵
 
   public GUI() {
     initMainWindow();
@@ -52,127 +47,130 @@ public class GUI {
     initStatusBar();
   }
 
-  //显示图、鼠标监听、套索实施
+  // 显示图、鼠标监听、套索实施
   private void initScrollPane() {
     imageIcon = new ImageIcon(seamCarver.picture());
-    
-    label = new JLabel(imageIcon) {
-      @Override
-      protected void paintComponent(Graphics g) {
-          super.paintComponent(g);
-          if (!points.isEmpty()) {
+
+    label =
+        new JLabel(imageIcon) {
+          @Override
+          protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (!points.isEmpty()) {
               int[] xPoints = new int[points.size()];
               int[] yPoints = new int[points.size()];
 
               for (int i = 0; i < points.size(); i++) {
-                  Point point = points.get(i);
-                  xPoints[i] = point.x;
-                  yPoints[i] = point.y;
+                Point point = points.get(i);
+                xPoints[i] = point.x;
+                yPoints[i] = point.y;
               }
 
               Graphics2D g2d = (Graphics2D) g.create();
-              //fillPolygon(g2d, xPoints, yPoints, points.size()); // 填充多边形内部
+              // fillPolygon(g2d, xPoints, yPoints, points.size()); // 填充多边形内部
               g2d.setColor(Color.RED);
               g2d.drawPolygon(xPoints, yPoints, points.size()); // 多边形
               g2d.dispose();
+            }
           }
-      }
-  };
+        };
 
-  int width = imageIcon.getIconWidth();
-  int height = imageIcon.getIconHeight();
-  label.setPreferredSize(new Dimension(width, height));
+    int width = imageIcon.getIconWidth();
+    int height = imageIcon.getIconHeight();
+    label.setPreferredSize(new Dimension(width, height));
 
-  JScrollPane scrollPane = new JScrollPane(label);
-  panel.add(scrollPane, BorderLayout.CENTER);
+    JScrollPane scrollPane = new JScrollPane(label);
+    panel.add(scrollPane, BorderLayout.CENTER);
 
-  highlight = new boolean[width][height];
+    highlight = new boolean[width][height];
 
-  label.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-          points.clear(); 
-          points.add(e.getPoint()); 
-          label.repaint(); // 重新绘制以显示套索选区
+    label.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            points.clear();
+            points.add(e.getPoint());
+            label.repaint(); // 重新绘制以显示套索选区
+          }
 
-      }
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            points.add(e.getPoint()); // 最后一个点
+            label.repaint();
+            // updateHighlightMatrix();
+          }
+        });
 
-      @Override
-      public void mouseReleased(MouseEvent e) {
-          points.add(e.getPoint()); // 最后一个点
-          label.repaint(); 
-          //updateHighlightMatrix();
-      }
-  });
-
-  label.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseDragged(MouseEvent e) {
-          points.add(e.getPoint()); 
-          label.repaint(); 
-      }
-  });
-  
+    label.addMouseMotionListener(
+        new MouseMotionAdapter() {
+          @Override
+          public void mouseDragged(MouseEvent e) {
+            points.add(e.getPoint());
+            label.repaint();
+          }
+        });
   }
-//多边形不太好写，想不出来也没查出来，放一个外接矩形的，留条后路
-//   private void fillPolygon(Graphics g, int[] xPoints, int[] yPoints, int nPoints) {
-//     Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
 
-//     // 边界矩形
-//     Rectangle bounds = polygon.getBounds();
+  // 多边形不太好写，想不出来也没查出来，放一个外接矩形的，留条后路
+  //   private void fillPolygon(Graphics g, int[] xPoints, int[] yPoints, int nPoints) {
+  //     Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
 
-//     // 获取多边形内部的像素点颜色
-//     Image image = imageIcon.getImage();
-//     BufferedImage bufferedImage = toBufferedImage(image);
+  //     // 边界矩形
+  //     Rectangle bounds = polygon.getBounds();
 
-//     for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
-//         for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
-//             if (polygon.contains(x, y)) { 
-//                 g.setColor(new Color(bufferedImage.getRGB(x, y))); // 获取像素点颜色
-//                 g.fillRect(x, y, 1, 1); // 填充像素点
-//                 highlight[x][y] = true; // 标记高亮像素点
-//             }
-//         }
-//     }
-// }
+  //     // 获取多边形内部的像素点颜色
+  //     Image image = imageIcon.getImage();
+  //     BufferedImage bufferedImage = toBufferedImage(image);
 
-// 更新高亮矩阵
-// private void updateHighlightMatrix() {
-//     for (int i = 0; i < highlight.length; i++) {
-//         for (int j = 0; j < highlight[0].length; j++) {
-//             highlight[i][j] = false;
-//         }
-//     }
+  //     for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
+  //         for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
+  //             if (polygon.contains(x, y)) {
+  //                 g.setColor(new Color(bufferedImage.getRGB(x, y))); // 获取像素点颜色
+  //                 g.fillRect(x, y, 1, 1); // 填充像素点
+  //                 highlight[x][y] = true; // 标记高亮像素点
+  //             }
+  //         }
+  //     }
+  // }
 
-//     // 获取多边形内的像素点
-//     for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-//         for (int y = 0; y < imageIcon.getIconHeight(); y++) {
-//             if (label.contains(x, y)) { 
-//                 if (label.contains(x + 1, y + 1)) {
-//                     if (highlight[x][y] && highlight[x + 1][y] && highlight[x][y + 1] && highlight[x + 1][y + 1]) {
-//                         highlight[x][y] = true;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
+  // 更新高亮矩阵
+  // private void updateHighlightMatrix() {
+  //     for (int i = 0; i < highlight.length; i++) {
+  //         for (int j = 0; j < highlight[0].length; j++) {
+  //             highlight[i][j] = false;
+  //         }
+  //     }
 
-// 转换Image为BufferedImage
-private BufferedImage toBufferedImage(Image image) {
+  //     // 获取多边形内的像素点
+  //     for (int x = 0; x < imageIcon.getIconWidth(); x++) {
+  //         for (int y = 0; y < imageIcon.getIconHeight(); y++) {
+  //             if (label.contains(x, y)) {
+  //                 if (label.contains(x + 1, y + 1)) {
+  //                     if (highlight[x][y] && highlight[x + 1][y] && highlight[x][y + 1] &&
+  // highlight[x + 1][y + 1]) {
+  //                         highlight[x][y] = true;
+  //                     }
+  //                 }
+  //             }
+  //         }
+  //     }
+  // }
+
+  // 转换Image为BufferedImage
+  private BufferedImage toBufferedImage(Image image) {
     if (image instanceof BufferedImage) {
-        return (BufferedImage) image;
+      return (BufferedImage) image;
     }
 
-    BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage bufferedImage =
+        new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
 
     Graphics2D g2d = bufferedImage.createGraphics();
     g2d.drawImage(image, 0, 0, null);
     g2d.dispose();
 
     return bufferedImage;
-}
-
+  }
 
   private void initRightPanel() {
     JPanel rightPanel = new JPanel();
@@ -241,29 +239,31 @@ private BufferedImage toBufferedImage(Image image) {
 
     // 添加 "Undo" 按钮
     JButton undoButton = new JButton("Undo");
-    undoButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    undoButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             // 当点击 "Undo" 按钮时调用 SeamCarver 的 undo 方法进行撤销操作
             seamCarver.undo(true);
             // 刷新图像显示
             imageIcon.setImage(seamCarver.picture());
             label.repaint();
-        }
-    });
+          }
+        });
     rightPanel.add(undoButton);
 
     // 添加 "Redo" 按钮
     JButton redoButton = new JButton("Redo");
-    redoButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    redoButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             // 重做操作
             seamCarver.undo(false);
             imageIcon.setImage(seamCarver.picture());
             label.repaint();
-        }
-    });
+          }
+        });
     rightPanel.add(redoButton);
   }
 
@@ -278,82 +278,68 @@ private BufferedImage toBufferedImage(Image image) {
     menu.add(menuItemExit);
 
     // 为 "打开" 菜单项添加动作监听器
-    menuItemOpen.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    menuItemOpen.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             // 实现打开文件的逻辑
             JFileChooser fileChooser = new JFileChooser();
             int result = fileChooser.showOpenDialog(frame);
             if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                try {
-                    // 假设 SeamCarver 构造函数接收一个 File 对象
-                    seamCarver = new SeamCarver(selectedFile.getAbsolutePath());
-                    imageIcon.setImage(seamCarver.picture());
-                    label.repaint();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(frame, "打开文件失败。", "错误", JOptionPane.ERROR_MESSAGE);
-                }
+              seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
+              imageIcon.setImage(seamCarver.picture());
+              label.repaint();
             }
-        }
-    });
+          }
+        });
 
     // 为 "保存" 菜单项添加动作监听器
-    menuItemSave.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    menuItemSave.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             // 实现保存文件的逻辑
             JFileChooser fileChooser = new JFileChooser();
             int result = fileChooser.showSaveDialog(frame);
             if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                if (!selectedFile.getName().toLowerCase().endsWith(".jpg")) {
-                    selectedFile = new File(selectedFile.getAbsolutePath() + ".jpg");
-                }
-                try {
-                    seamCarver.save(selectedFile.getAbsolutePath());
-                    JOptionPane.showMessageDialog(frame, "图片已保存为: " + selectedFile.getName());
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(frame, "保存文件失败。", "错误", JOptionPane.ERROR_MESSAGE);
-                }
+              seamCarver.save(fileChooser.getSelectedFile().getAbsolutePath());
             }
-        }
-    });
+          }
+        });
 
     // 为 "退出" 菜单项添加动作监听器
-    menuItemExit.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    menuItemExit.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             // 实现退出程序的逻辑
             System.exit(0);
-        }
-    });
+          }
+        });
 
     menuBar.add(menu);
     frame.setJMenuBar(menuBar);
-}
+  }
 
   private void initStatusBar() {
     JLabel statusBar = new JLabel("状态栏");
     statusBar.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     frame.add(statusBar, BorderLayout.SOUTH);
-    
+
     JButton selectButton = new JButton("套索工具");
     statusBar.add(selectButton);
-    selectButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
+    selectButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
             startSelectionTool();
-        }
-    });
-    
+          }
+        });
   }
 
   private void startSelectionTool() {
-        // 点击则弹出一个对话框，用于提示用户进行套索选区
-        JOptionPane.showMessageDialog(frame, "请在图像上用鼠标拖动进行选区。", "套索工具", JOptionPane.INFORMATION_MESSAGE);
-    }
-
+    // 点击则弹出一个对话框，用于提示用户进行套索选区
+    JOptionPane.showMessageDialog(
+        frame, "请在图像上用鼠标拖动进行选区。", "套索工具", JOptionPane.INFORMATION_MESSAGE);
+  }
 }
