@@ -3,6 +3,8 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -236,20 +238,102 @@ private BufferedImage toBufferedImage(Image image) {
           }
         });
     rightPanel.add(resizeButton);
+
+    // 添加 "Undo" 按钮
+    JButton undoButton = new JButton("Undo");
+    undoButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // 当点击 "Undo" 按钮时调用 SeamCarver 的 undo 方法进行撤销操作
+            seamCarver.undo(true);
+            // 刷新图像显示
+            imageIcon.setImage(seamCarver.picture());
+            label.repaint();
+        }
+    });
+    rightPanel.add(undoButton);
+
+    // 添加 "Redo" 按钮
+    JButton redoButton = new JButton("Redo");
+    redoButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // 重做操作
+            seamCarver.undo(false);
+            imageIcon.setImage(seamCarver.picture());
+            label.repaint();
+        }
+    });
+    rightPanel.add(redoButton);
   }
 
   private void initMenuBar() {
     JMenuBar menuBar = new JMenuBar();
     JMenu menu = new JMenu("文件");
-    JMenuItem menuItem1 = new JMenuItem("打开");
-    JMenuItem menuItem2 = new JMenuItem("保存");
-    JMenuItem menuItem3 = new JMenuItem("退出");
-    menu.add(menuItem1);
-    menu.add(menuItem2);
-    menu.add(menuItem3);
+    JMenuItem menuItemOpen = new JMenuItem("打开");
+    JMenuItem menuItemSave = new JMenuItem("保存");
+    JMenuItem menuItemExit = new JMenuItem("退出");
+    menu.add(menuItemOpen);
+    menu.add(menuItemSave);
+    menu.add(menuItemExit);
+
+    // 为 "打开" 菜单项添加动作监听器
+    menuItemOpen.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // 实现打开文件的逻辑
+            JFileChooser fileChooser = new JFileChooser();
+            int result = fileChooser.showOpenDialog(frame);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                try {
+                    // 假设 SeamCarver 构造函数接收一个 File 对象
+                    seamCarver = new SeamCarver(selectedFile.getAbsolutePath());
+                    imageIcon.setImage(seamCarver.picture());
+                    label.repaint();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(frame, "打开文件失败。", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    });
+
+    // 为 "保存" 菜单项添加动作监听器
+    menuItemSave.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // 实现保存文件的逻辑
+            JFileChooser fileChooser = new JFileChooser();
+            int result = fileChooser.showSaveDialog(frame);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                if (!selectedFile.getName().toLowerCase().endsWith(".jpg")) {
+                    selectedFile = new File(selectedFile.getAbsolutePath() + ".jpg");
+                }
+                try {
+                    seamCarver.save(selectedFile.getAbsolutePath());
+                    JOptionPane.showMessageDialog(frame, "图片已保存为: " + selectedFile.getName());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(frame, "保存文件失败。", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    });
+
+    // 为 "退出" 菜单项添加动作监听器
+    menuItemExit.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // 实现退出程序的逻辑
+            System.exit(0);
+        }
+    });
+
     menuBar.add(menu);
     frame.setJMenuBar(menuBar);
-  }
+}
 
   private void initStatusBar() {
     JLabel statusBar = new JLabel("状态栏");
