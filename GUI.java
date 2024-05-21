@@ -427,15 +427,6 @@ public class GUI {
     statusBar.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     frame.add(statusBar, BorderLayout.SOUTH);
 
-    JButton selectButton = new JButton("套索工具");
-    statusBar.add(selectButton);
-    selectButton.addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            startSelectionTool();
-          }
-        });
   }
 
   private void startSelectionTool() {
