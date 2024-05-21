@@ -404,7 +404,6 @@ public class SeamCarver implements ISeamCarver {
       int[] pixels = pixelsStackFrom.pop();
       insertPixels(direct ? XADD : YADD, seam, pixels);
       seamsStacksTo.push(seam);
-      pixelsStackTo.push(pixels);
     } else {
       // undo strech or redo compress: undo+XADD or redo+XSUB
       // remove the seam
