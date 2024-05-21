@@ -67,7 +67,7 @@ public class GUI {
               }
 
               Graphics2D g2d = (Graphics2D) g.create();
-              // fillPolygon(g2d, xPoints, yPoints, points.size()); // 填充多边形内部
+              fillPolygon(g2d, xPoints, yPoints, points.size()); // 填充多边形内部
               g2d.setColor(Color.RED);
               g2d.drawPolygon(xPoints, yPoints, points.size()); // 多边形
               g2d.dispose();
@@ -97,7 +97,7 @@ public class GUI {
           public void mouseReleased(MouseEvent e) {
             points.add(e.getPoint()); // 最后一个点
             label.repaint();
-            // updateHighlightMatrix();
+            
           }
         });
 
@@ -112,49 +112,66 @@ public class GUI {
   }
 
   // 多边形不太好写，想不出来也没查出来，放一个外接矩形的，留条后路
-  //   private void fillPolygon(Graphics g, int[] xPoints, int[] yPoints, int nPoints) {
-  //     Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
+    private void fillPolygon(Graphics g, int[] xPoints, int[] yPoints, int nPoints) {
+      Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
 
-  //     // 边界矩形
-  //     Rectangle bounds = polygon.getBounds();
+      // 边界矩形
+      Rectangle bounds = polygon.getBounds();
 
-  //     // 获取多边形内部的像素点颜色
-  //     Image image = imageIcon.getImage();
-  //     BufferedImage bufferedImage = toBufferedImage(image);
+      // 获取多边形内部的像素点颜色
+      Image image = imageIcon.getImage();
+      BufferedImage bufferedImage = toBufferedImage(image);
 
-  //     for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
-  //         for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
-  //             if (polygon.contains(x, y)) {
-  //                 g.setColor(new Color(bufferedImage.getRGB(x, y))); // 获取像素点颜色
-  //                 g.fillRect(x, y, 1, 1); // 填充像素点
-  //                 highlight[x][y] = true; // 标记高亮像素点
-  //             }
-  //         }
-  //     }
-  // }
+      for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
+          for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
+              if (polygon.contains(x, y)) {
+                  g.setColor(new Color(bufferedImage.getRGB(x, y))); // 获取像素点颜色
+                  g.fillRect(x, y, 1, 1); // 填充像素点
+                  highlight[x][y] = true; // 标记高亮像素点
+              }
+          }
+      }
+  }
 
   // 更新高亮矩阵
-  // private void updateHighlightMatrix() {
-  //     for (int i = 0; i < highlight.length; i++) {
-  //         for (int j = 0; j < highlight[0].length; j++) {
-  //             highlight[i][j] = false;
-  //         }
-  //     }
+  private void updateHighlightMatrix() {
+      for (int i = 0; i < highlight.length; i++) {
+          for (int j = 0; j < highlight[0].length; j++) {
+              highlight[i][j] = false;
+          }
+      }
 
-  //     // 获取多边形内的像素点
-  //     for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-  //         for (int y = 0; y < imageIcon.getIconHeight(); y++) {
-  //             if (label.contains(x, y)) {
-  //                 if (label.contains(x + 1, y + 1)) {
-  //                     if (highlight[x][y] && highlight[x + 1][y] && highlight[x][y + 1] &&
-  // highlight[x + 1][y + 1]) {
-  //                         highlight[x][y] = true;
-  //                     }
-  //                 }
-  //             }
-  //         }
-  //     }
-  // }
+      // 获取多边形内的像素点
+      for (int x = 0; x < imageIcon.getIconWidth(); x++) {
+          for (int y = 0; y < imageIcon.getIconHeight(); y++) {
+              if (label.contains(x, y)) {
+                  if (label.contains(x + 1, y + 1)) {
+                      if (highlight[x][y] && highlight[x + 1][y] && highlight[x][y + 1] &&highlight[x + 1][y + 1]) {
+                          highlight[x][y] = true;
+                      }
+                  }
+              }
+          }
+      }
+  }
+
+  private float[][] calculateEnergyWithHighlight() {
+    int width = imageIcon.getIconWidth();
+    int height = imageIcon.getIconHeight();
+    float[][] mask = new float[width][height];
+
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            if (highlight[x][y]) {
+                mask[x][y] = 1e9f;
+            } else {
+                mask[x][y] = 0;
+            }
+        }
+    }
+
+    return mask;
+}
 
   // 转换Image为BufferedImage
   private BufferedImage toBufferedImage(Image image) {
@@ -265,6 +282,27 @@ public class GUI {
           }
         });
     rightPanel.add(redoButton);
+    
+    //套索
+    JButton selectButton = new JButton("套索工具");
+    selectButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            startSelectionTool();
+          }
+        });
+      rightPanel.add(selectButton);
+
+      JButton msButton = new JButton("确认");
+    selectButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            startSelectionTool();
+          }
+        });
+      rightPanel.add(msButton);
   }
 
   private void initMenuBar() {
@@ -325,16 +363,9 @@ public class GUI {
     JLabel statusBar = new JLabel("状态栏");
     statusBar.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     frame.add(statusBar, BorderLayout.SOUTH);
+    
 
-    JButton selectButton = new JButton("套索工具");
-    statusBar.add(selectButton);
-    selectButton.addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            startSelectionTool();
-          }
-        });
+   
   }
 
   private void startSelectionTool() {
