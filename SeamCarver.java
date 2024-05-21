@@ -192,6 +192,7 @@ public class SeamCarver implements ISeamCarver {
       height++;
     }
     updateEnergyMap(op, seam);
+    updateMask(op, seam);
   }
 
   // XSUB or YSUB
@@ -224,6 +225,7 @@ public class SeamCarver implements ISeamCarver {
       height--;
     }
     updateEnergyMap(op, seam);
+    updateMask(op, seam);
     return pixels;
   }
 
@@ -260,6 +262,38 @@ public class SeamCarver implements ISeamCarver {
           }
         });
     energyMap = newEnergyMap;
+  }
+
+  private void updateMask(int op, int[] seam) {
+    if (!maskFlag) return;
+    float[][] newMask = new float[height][width];
+    Utils.parallel(
+        (cpu, cpus) -> {
+          if (op == XADD) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++)
+                if (x < seam[y]) newMask[y][x] = mask[y][x];
+                else if (x > seam[y]) newMask[y][x] = mask[y][x - 1];
+                else newMask[y][x] = 0;
+          } else if (op == XSUB) {
+            for (int y = cpu; y < height; y += cpus)
+              for (int x = 0; x < width; x++)
+                if (x < seam[y]) newMask[y][x] = mask[y][x];
+                else if (x >= seam[y]) newMask[y][x] = mask[y][x + 1];
+          } else if (op == YADD) {
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
+                if (y < seam[x]) newMask[y][x] = mask[y][x];
+                else if (y > seam[x]) newMask[y][x] = mask[y - 1][x];
+                else newMask[y][x] = 0;
+          } else {
+            for (int x = cpu; x < width; x += cpus)
+              for (int y = 0; y < height; y++)
+                if (y < seam[x]) newMask[y][x] = mask[y][x];
+                else if (y >= seam[x]) newMask[y][x] = mask[y + 1][x];
+          }
+        });
+    mask = newMask;
   }
 
   /*
@@ -355,10 +389,8 @@ public class SeamCarver implements ISeamCarver {
       return;
     }
     Stack<int[]> seamsStacksFrom = undo ? undoSeamsStack : redoSeamsStack;
-    // Stack<Color[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
     Stack<int[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
     Stack<int[]> seamsStacksTo = undo ? redoSeamsStack : undoSeamsStack;
-    // Stack<Color[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
     Stack<int[]> pixelsStackTo = undo ? redoPixelsStack : undoPixelsStack;
     int op = opStackFrom.pop();
     int invOp = ~op & 0b11;
@@ -372,7 +404,6 @@ public class SeamCarver implements ISeamCarver {
       int[] pixels = pixelsStackFrom.pop();
       insertPixels(direct ? XADD : YADD, seam, pixels);
       seamsStacksTo.push(seam);
-      pixelsStackTo.push(pixels);
     } else {
       // undo strech or redo compress: undo+XADD or redo+XSUB
       // remove the seam
@@ -402,5 +433,21 @@ public class SeamCarver implements ISeamCarver {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  @Override
+  public void restore() {
+    picture = originPicture;
+    width = picture.getWidth();
+    height = picture.getHeight();
+    calEnergyMap();
+    maskFlag = false;
+    splitFlag = false;
+    undoStack.clear();
+    redoStack.clear();
+    undoSeamsStack.clear();
+    redoSeamsStack.clear();
+    undoPixelsStack.clear();
+    redoPixelsStack.clear();
   }
 }

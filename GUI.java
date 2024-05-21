@@ -21,6 +21,8 @@ public class GUI {
   private ImageIcon imageIcon;
   private ArrayList<Point> points = new ArrayList<>(); // 存储套索选区的所有点
   private boolean[][] highlight; // 套索内矩阵
+  private volatile boolean runningUndo = false;
+  private volatile boolean runningRedo = false;
 
   public GUI() {
     initMainWindow();
@@ -208,8 +210,16 @@ public class GUI {
         new ChangeListener() {
           @Override
           public void stateChanged(ChangeEvent e) {
-            int op = (seamCarver.width() < (int) wSpinner.getValue()) ? XADD : XSUB;
-            seamCarver.operate(op);
+            int newWidth = (int) wSpinner.getValue();
+            int newHeight = (int) hSpinner.getValue();
+            int picWidth = seamCarver.width();
+            int picHeight = seamCarver.height();
+            for (int i = 0; i < picWidth - newWidth; i++) seamCarver.operate(XSUB); // 0b11 for XSUB
+            for (int i = 0; i < newWidth - picWidth; i++) seamCarver.operate(XADD); // 0b00 for XADD
+            for (int i = 0; i < picHeight - newHeight; i++)
+              seamCarver.operate(YSUB); // 0b10 for YSUB
+            for (int i = 0; i < newHeight - picHeight; i++)
+              seamCarver.operate(YADD); // 0b01 for YADD
             imageIcon.setImage(seamCarver.picture());
             label.repaint();
           }
@@ -219,8 +229,16 @@ public class GUI {
         new ChangeListener() {
           @Override
           public void stateChanged(ChangeEvent e) {
-            int op = (seamCarver.height() < (int) hSpinner.getValue()) ? YADD : YSUB;
-            seamCarver.operate(op);
+            int newWidth = (int) wSpinner.getValue();
+            int newHeight = (int) hSpinner.getValue();
+            int picWidth = seamCarver.width();
+            int picHeight = seamCarver.height();
+            for (int i = 0; i < picWidth - newWidth; i++) seamCarver.operate(XSUB); // 0b11 for XSUB
+            for (int i = 0; i < newWidth - picWidth; i++) seamCarver.operate(XADD); // 0b00 for XADD
+            for (int i = 0; i < picHeight - newHeight; i++)
+              seamCarver.operate(YSUB); // 0b10 for YSUB
+            for (int i = 0; i < newHeight - picHeight; i++)
+              seamCarver.operate(YADD); // 0b01 for YADD
             imageIcon.setImage(seamCarver.picture());
             label.repaint();
           }
@@ -256,45 +274,76 @@ public class GUI {
 
     // 添加 "Undo" 按钮
     JButton undoButton = new JButton("Undo");
-    undoButton.addActionListener(
-        new ActionListener() {
+    undoButton.addMouseListener(
+        new MouseAdapter() {
           @Override
-          public void actionPerformed(ActionEvent e) {
-            // 当点击 "Undo" 按钮时调用 SeamCarver 的 undo 方法进行撤销操作
-            seamCarver.undo(true);
-            // 刷新图像显示
-            imageIcon.setImage(seamCarver.picture());
-            label.repaint();
+          public void mousePressed(MouseEvent e) {
+            runningUndo = true;
+            new Thread(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        while (runningUndo) {
+                          seamCarver.undo(true);
+                          imageIcon.setImage(seamCarver.picture());
+                          label.repaint();
+                          wSpinner.setValue(seamCarver.width());
+                          hSpinner.setValue(seamCarver.height());
+                          try {
+                            Thread.sleep(10); // 10ms
+                          } catch (InterruptedException e) {
+                            e.printStackTrace();
+                          }
+                        }
+                      }
+                    })
+                .start();
+          }
+
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            runningUndo = false;
           }
         });
     rightPanel.add(undoButton);
 
     // 添加 "Redo" 按钮
     JButton redoButton = new JButton("Redo");
-    redoButton.addActionListener(
-        new ActionListener() {
+    redoButton.addMouseListener(
+        new MouseAdapter() {
           @Override
-          public void actionPerformed(ActionEvent e) {
-            // 重做操作
-            seamCarver.undo(false);
-            imageIcon.setImage(seamCarver.picture());
-            label.repaint();
+          public void mousePressed(MouseEvent e) {
+            runningRedo = true;
+            new Thread(
+                    new Runnable() {
+                      @Override
+                      public void run() {
+                        while (runningRedo) {
+                          seamCarver.undo(false);
+                          imageIcon.setImage(seamCarver.picture());
+                          label.repaint();
+                          wSpinner.setValue(seamCarver.width());
+                          hSpinner.setValue(seamCarver.height());
+                          try {
+                            Thread.sleep(10); // 10ms
+                          } catch (InterruptedException e) {
+                            e.printStackTrace();
+                          }
+                        }
+                      }
+                    })
+                .start();
+          }
+
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            runningRedo = false;
           }
         });
     rightPanel.add(redoButton);
-    
-    //套索
-    JButton selectButton = new JButton("套索工具");
-    selectButton.addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            startSelectionTool();
-          }
-        });
-      rightPanel.add(selectButton);
 
-      JButton msButton = new JButton("确认");
+    JButton selectButton = new JButton("套索工具");
+    rightPanel.add(selectButton);
     selectButton.addActionListener(
         new ActionListener() {
           @Override
@@ -302,7 +351,21 @@ public class GUI {
             startSelectionTool();
           }
         });
-      rightPanel.add(msButton);
+
+    JButton restoreButton = new JButton("还原");
+    rightPanel.add(restoreButton);
+    restoreButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            seamCarver.restore();
+            imageIcon.setImage(seamCarver.picture());
+            label.repaint();
+            wSpinner.setValue(seamCarver.width());
+            hSpinner.setValue(seamCarver.height());
+          }
+        });
+    rightPanel.add(redoButton);
   }
 
   private void initMenuBar() {
@@ -363,9 +426,16 @@ public class GUI {
     JLabel statusBar = new JLabel("状态栏");
     statusBar.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     frame.add(statusBar, BorderLayout.SOUTH);
-    
 
-   
+    JButton selectButton = new JButton("套索工具");
+    statusBar.add(selectButton);
+    selectButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            startSelectionTool();
+          }
+        });
   }
 
   private void startSelectionTool() {

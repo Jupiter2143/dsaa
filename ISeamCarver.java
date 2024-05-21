@@ -9,7 +9,6 @@ interface ISeamCarver {
   int height();
 
   // get picture
-  // Picture picture();
   BufferedImage picture();
 
   // add mask to protect some pixels or try to remove some pixels
@@ -24,8 +23,8 @@ interface ISeamCarver {
   // undo: true for undo, false for redo
   public void undo(boolean undo);
 
-  //
-  // public void restore();
+  // Restore to the original image.
+  public void restore();
 
   public void save(String filename);
 }
