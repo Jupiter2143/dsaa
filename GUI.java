@@ -24,6 +24,10 @@ public class GUI {
   private volatile boolean runningRedo = false;
   private ActionListener actUpdate;
   private ChangeListener chgUpdate;
+  private ArrayList<Point> highPriorityPoints = new ArrayList<>();
+  private ArrayList<Point> lowPriorityPoints = new ArrayList<>();
+  
+
 
   public GUI() {
     initAllActions();
@@ -55,29 +59,37 @@ public class GUI {
   private void initScrollPane() {
     imageIcon = new ImageIcon(seamCarver.picture());
 
-    label =
-        new JLabel(imageIcon) {
-          @Override
-          protected void paintComponent(Graphics g) {
+    label = new JLabel(imageIcon) {
+        @Override
+        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (!points.isEmpty()) {
-              int[] xPoints = new int[points.size()];
-              int[] yPoints = new int[points.size()];
+            Graphics2D g2d = (Graphics2D) g.create();
 
-              for (int i = 0; i < points.size(); i++) {
+            if (!highPriorityPoints.isEmpty()) {
+                drawPolygon(g2d, highPriorityPoints, Color.RED);
+            }
+
+            if (!lowPriorityPoints.isEmpty()) {
+                drawPolygon(g2d, lowPriorityPoints, Color.GREEN);
+            }
+
+            g2d.dispose();
+        }
+
+        private void drawPolygon(Graphics2D g2d, ArrayList<Point> points, Color color) {
+            int[] xPoints = new int[points.size()];
+            int[] yPoints = new int[points.size()];
+
+            for (int i = 0; i < points.size(); i++) {
                 Point point = points.get(i);
                 xPoints[i] = point.x;
                 yPoints[i] = point.y;
-              }
-
-              Graphics2D g2d = (Graphics2D) g.create();
-              fillPolygon(g2d, xPoints, yPoints, points.size()); // 填充多边形内部
-              g2d.setColor(Color.RED);
-              g2d.drawPolygon(xPoints, yPoints, points.size()); // 多边形
-              g2d.dispose();
             }
-          }
-        };
+
+            g2d.setColor(color);
+            g2d.drawPolygon(xPoints, yPoints, points.size());
+        }
+    };
 
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
@@ -88,112 +100,108 @@ public class GUI {
 
     highlight = new boolean[width][height];
 
-    label.addMouseListener(
-        new MouseAdapter() {
-          @Override
-          public void mousePressed(MouseEvent e) {
-            points.clear();
-            points.add(e.getPoint());
-            label.repaint(); // 重新绘制以显示套索选区
-          }
-
-          @Override
-          public void mouseReleased(MouseEvent e) {
-            points.add(e.getPoint()); // 最后一个点
-            label.repaint();
-          }
-        });
-
-    label.addMouseMotionListener(
-        new MouseMotionAdapter() {
-          @Override
-          public void mouseDragged(MouseEvent e) {
-            points.add(e.getPoint());
-            label.repaint();
-          }
-        });
-  }
-
-  // 多边形不太好写，想不出来也没查出来，放一个外接矩形的，留条后路
-  private void fillPolygon(Graphics g, int[] xPoints, int[] yPoints, int nPoints) {
-    Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
-
-    // 边界矩形
-    Rectangle bounds = polygon.getBounds();
-
-    // 获取多边形内部的像素点颜色
-    Image image = imageIcon.getImage();
-    BufferedImage bufferedImage = toBufferedImage(image);
-
-    for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
-      for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
-        if (polygon.contains(x, y)) {
-          g.setColor(new Color(bufferedImage.getRGB(x, y))); // 获取像素点颜色
-          g.fillRect(x, y, 1, 1); // 填充像素点
-          highlight[x][y] = true; // 标记高亮像素点
-        }
-      }
-    }
-  }
-
-  // 更新高亮矩阵
-  private void updateHighlightMatrix() {
-    for (int i = 0; i < highlight.length; i++) {
-      for (int j = 0; j < highlight[0].length; j++) {
-        highlight[i][j] = false;
-      }
-    }
-
-    // 获取多边形内的像素点
-    for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-      for (int y = 0; y < imageIcon.getIconHeight(); y++) {
-        if (label.contains(x, y)) {
-          if (label.contains(x + 1, y + 1)) {
-            if (highlight[x][y]
-                && highlight[x + 1][y]
-                && highlight[x][y + 1]
-                && highlight[x + 1][y + 1]) {
-              highlight[x][y] = true;
+    label.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                highPriorityPoints.clear();
+                highPriorityPoints.add(e.getPoint());
+            } else if (SwingUtilities.isRightMouseButton(e)) {
+                lowPriorityPoints.clear();
+                lowPriorityPoints.add(e.getPoint());
             }
-          }
+            label.repaint();
         }
-      }
-    }
-  }
 
-  private float[][] calculateEnergyWithHighlight() {
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                highPriorityPoints.add(e.getPoint());
+            } else if (SwingUtilities.isRightMouseButton(e)) {
+                lowPriorityPoints.add(e.getPoint());
+            }
+            label.repaint();
+            seamCarver.setMask(calculateEnergyWithHighlight());
+        }
+    });
+
+    label.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseDragged(MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                highPriorityPoints.add(e.getPoint());
+            } else if (SwingUtilities.isRightMouseButton(e)) {
+                lowPriorityPoints.add(e.getPoint());
+            }
+            label.repaint();
+        }
+    });
+}
+
+// 更新高亮矩阵
+private void updateHighlightMatrix() {
+    for (int i = 0; i < highlight.length; i++) {
+        for (int j = 0; j < highlight[0].length; j++) {
+            highlight[i][j] = false;
+        }
+    }
+
+    updateHighlightForPoints(highPriorityPoints);
+    updateHighlightForPoints(lowPriorityPoints);
+}
+
+private void updateHighlightForPoints(ArrayList<Point> points) {
+    if (points.size() < 3) return;
+
+    Polygon polygon = new Polygon();
+    for (Point point : points) {
+        polygon.addPoint(point.x, point.y);
+    }
+
+    for (int x = 0; x < imageIcon.getIconWidth(); x++) {
+        for (int y = 0; y < imageIcon.getIconHeight(); y++) {
+            if (polygon.contains(x, y)) {
+                highlight[x][y] = true;
+            }
+        }
+    }
+}
+
+private float[][] calculateEnergyWithHighlight() {
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
     float[][] mask = new float[width][height];
 
     for (int x = 0; x < width; x++) {
-      for (int y = 0; y < height; y++) {
-        if (highlight[x][y]) {
-          mask[x][y] = 1e9f;
-        } else {
-          mask[x][y] = 0;
+        for (int y = 0; y < height; y++) {
+            mask[x][y] = 0;
         }
-      }
     }
+
+    applyPriorityToMask(highPriorityPoints, mask, -1e9f);
+    applyPriorityToMask(lowPriorityPoints, mask, 1e9f);
 
     return mask;
-  }
+}
 
-  // 转换Image为BufferedImage
-  private BufferedImage toBufferedImage(Image image) {
-    if (image instanceof BufferedImage) {
-      return (BufferedImage) image;
+private void applyPriorityToMask(ArrayList<Point> points, float[][] mask, float value) {
+    if (points.size() < 3) return;
+
+    Polygon polygon = new Polygon();
+    for (Point point : points) {
+        polygon.addPoint(point.x, point.y);
     }
 
-    BufferedImage bufferedImage =
-        new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+    for (int x = 0; x < mask.length; x++) {
+        for (int y = 0; y < mask[0].length; y++) {
+            if (polygon.contains(x, y)) {
+                mask[x][y] = value;
+            }
+        }
+    }
+}
 
-    Graphics2D g2d = bufferedImage.createGraphics();
-    g2d.drawImage(image, 0, 0, null);
-    g2d.dispose();
-
-    return bufferedImage;
-  }
+  
 
   private void initRightPanel() {
     JPanel rightPanel = new JPanel();
