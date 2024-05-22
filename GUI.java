@@ -26,8 +26,6 @@ public class GUI {
   private ChangeListener chgUpdate;
   private ArrayList<Point> highPriorityPoints = new ArrayList<>();
   private ArrayList<Point> lowPriorityPoints = new ArrayList<>();
-  
-
 
   public GUI() {
     initAllActions();
@@ -59,37 +57,38 @@ public class GUI {
   private void initScrollPane() {
     imageIcon = new ImageIcon(seamCarver.picture());
 
-    label = new JLabel(imageIcon) {
-        @Override
-        protected void paintComponent(Graphics g) {
+    label =
+        new JLabel(imageIcon) {
+          @Override
+          protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g.create();
 
             if (!highPriorityPoints.isEmpty()) {
-                drawPolygon(g2d, highPriorityPoints, Color.RED);
+              drawPolygon(g2d, highPriorityPoints, Color.RED);
             }
 
             if (!lowPriorityPoints.isEmpty()) {
-                drawPolygon(g2d, lowPriorityPoints, Color.GREEN);
+              drawPolygon(g2d, lowPriorityPoints, Color.GREEN);
             }
 
             g2d.dispose();
-        }
+          }
 
-        private void drawPolygon(Graphics2D g2d, ArrayList<Point> points, Color color) {
+          private void drawPolygon(Graphics2D g2d, ArrayList<Point> points, Color color) {
             int[] xPoints = new int[points.size()];
             int[] yPoints = new int[points.size()];
 
             for (int i = 0; i < points.size(); i++) {
-                Point point = points.get(i);
-                xPoints[i] = point.x;
-                yPoints[i] = point.y;
+              Point point = points.get(i);
+              xPoints[i] = point.x;
+              yPoints[i] = point.y;
             }
 
             g2d.setColor(color);
             g2d.drawPolygon(xPoints, yPoints, points.size());
-        }
-    };
+          }
+        };
 
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
@@ -100,108 +99,108 @@ public class GUI {
 
     highlight = new boolean[width][height];
 
-    label.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
+    label.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e)) {
-                highPriorityPoints.clear();
-                highPriorityPoints.add(e.getPoint());
+              highPriorityPoints.clear();
+              highPriorityPoints.add(e.getPoint());
             } else if (SwingUtilities.isRightMouseButton(e)) {
-                lowPriorityPoints.clear();
-                lowPriorityPoints.add(e.getPoint());
+              lowPriorityPoints.clear();
+              lowPriorityPoints.add(e.getPoint());
             }
             label.repaint();
-        }
+          }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
+          @Override
+          public void mouseReleased(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e)) {
-                highPriorityPoints.add(e.getPoint());
+              highPriorityPoints.add(e.getPoint());
             } else if (SwingUtilities.isRightMouseButton(e)) {
-                lowPriorityPoints.add(e.getPoint());
+              lowPriorityPoints.add(e.getPoint());
             }
             label.repaint();
             seamCarver.setMask(calculateEnergyWithHighlight());
-        }
-    });
+          }
+        });
 
-    label.addMouseMotionListener(new MouseMotionAdapter() {
-        @Override
-        public void mouseDragged(MouseEvent e) {
+    label.addMouseMotionListener(
+        new MouseMotionAdapter() {
+          @Override
+          public void mouseDragged(MouseEvent e) {
             if (SwingUtilities.isLeftMouseButton(e)) {
-                highPriorityPoints.add(e.getPoint());
+              highPriorityPoints.add(e.getPoint());
             } else if (SwingUtilities.isRightMouseButton(e)) {
-                lowPriorityPoints.add(e.getPoint());
+              lowPriorityPoints.add(e.getPoint());
             }
             label.repaint();
-        }
-    });
-}
+          }
+        });
+  }
 
-// 更新高亮矩阵
-private void updateHighlightMatrix() {
+  // 更新高亮矩阵
+  private void updateHighlightMatrix() {
     for (int i = 0; i < highlight.length; i++) {
-        for (int j = 0; j < highlight[0].length; j++) {
-            highlight[i][j] = false;
-        }
+      for (int j = 0; j < highlight[0].length; j++) {
+        highlight[i][j] = false;
+      }
     }
 
     updateHighlightForPoints(highPriorityPoints);
     updateHighlightForPoints(lowPriorityPoints);
-}
+  }
 
-private void updateHighlightForPoints(ArrayList<Point> points) {
+  private void updateHighlightForPoints(ArrayList<Point> points) {
     if (points.size() < 3) return;
 
     Polygon polygon = new Polygon();
     for (Point point : points) {
-        polygon.addPoint(point.x, point.y);
+      polygon.addPoint(point.x, point.y);
     }
 
     for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-        for (int y = 0; y < imageIcon.getIconHeight(); y++) {
-            if (polygon.contains(x, y)) {
-                highlight[x][y] = true;
-            }
+      for (int y = 0; y < imageIcon.getIconHeight(); y++) {
+        if (polygon.contains(x, y)) {
+          highlight[x][y] = true;
         }
+      }
     }
-}
+  }
 
-private float[][] calculateEnergyWithHighlight() {
+  private float[][] calculateEnergyWithHighlight() {
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
     float[][] mask = new float[width][height];
 
     for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            mask[x][y] = 0;
-        }
+      for (int y = 0; y < height; y++) {
+        mask[x][y] = 0;
+      }
     }
 
     applyPriorityToMask(highPriorityPoints, mask, -1e9f);
     applyPriorityToMask(lowPriorityPoints, mask, 1e9f);
 
     return mask;
-}
+  }
 
-private void applyPriorityToMask(ArrayList<Point> points, float[][] mask, float value) {
+  private void applyPriorityToMask(ArrayList<Point> points, float[][] mask, float value) {
     if (points.size() < 3) return;
 
     Polygon polygon = new Polygon();
     for (Point point : points) {
-        polygon.addPoint(point.x, point.y);
+      polygon.addPoint(point.x, point.y);
     }
 
     for (int x = 0; x < mask.length; x++) {
-        for (int y = 0; y < mask[0].length; y++) {
-            if (polygon.contains(x, y)) {
-                mask[x][y] = value;
-            }
+      for (int y = 0; y < mask[0].length; y++) {
+        if (polygon.contains(x, y)) {
+          mask[x][y] = value;
         }
+      }
     }
-}
-
-  
+  }
 
   private void initRightPanel() {
     JPanel rightPanel = new JPanel();
@@ -335,6 +334,39 @@ private void applyPriorityToMask(ArrayList<Point> points, float[][] mask, float 
           }
         });
     rightPanel.add(restoreButton);
+
+    JButton setMaskButton = new JButton("设置Mask");
+    setMaskButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            float mask[][] = new float[seamCarver.height()][seamCarver.width()];
+            for (int y = 0; y < seamCarver.height(); y++) {
+              for (int x = 0; x < seamCarver.width(); x++) {
+                mask[y][x] = 0.0f;
+              }
+            }
+
+            // 保护100到700行
+            for (int y = 100; y < 700; y++) {
+              for (int x = 0; x < seamCarver.width(); x++) {
+                mask[y][x] = 1e9f;
+              }
+            }
+            seamCarver.setMask(mask);
+          }
+        });
+    rightPanel.add(setMaskButton);
+
+    JButton removeMaskButton = new JButton("移除Mask");
+    removeMaskButton.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            seamCarver.removeMask();
+          }
+        });
+    rightPanel.add(removeMaskButton);
   }
 
   private void initMenuBar() {

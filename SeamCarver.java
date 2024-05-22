@@ -91,6 +91,7 @@ public class SeamCarver implements ISeamCarver {
   }
 
   private void maskMap() {
+    maskedEnergyMap = new float[height][width];
     Utils.parallel(
         (cpu, cpus) -> {
           for (int y = cpu; y < height; y += cpus)
@@ -429,6 +430,8 @@ public class SeamCarver implements ISeamCarver {
   @Override
   public void setMask(float[][] mask) {
     this.mask = new float[height][width];
+    System.out.println("mask: " + mask.length + " " + mask[0].length);
+    System.out.println("energyMap: " + energyMap.length + " " + energyMap[0].length);
     for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) this.mask[y][x] = mask[y][x];
     maskFlag = true;
   }
