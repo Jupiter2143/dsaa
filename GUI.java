@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class GUI {
@@ -13,7 +12,7 @@ public class GUI {
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
   private JFrame frame = new JFrame("Seam Carver");
-  private SeamCarver seamCarver = new SeamCarver("example2.jpg");
+  private SeamCarver seamCarver = new SeamCarver("example.jpg");
   private JPanel panel = new JPanel();
   private JLabel label = new JLabel();
   private JSpinner wSpinner;
@@ -23,8 +22,11 @@ public class GUI {
   private boolean[][] highlight; // 套索内矩阵
   private volatile boolean runningUndo = false;
   private volatile boolean runningRedo = false;
+  private ActionListener actUpdate;
+  private ChangeListener chgUpdate;
 
   public GUI() {
+    initAllActions();
     initMainWindow();
     initMainPanel();
     frame.setVisible(true);
@@ -208,43 +210,9 @@ public class GUI {
     int originW = seamCarver.width();
     int originH = seamCarver.height();
     wSpinner = new JSpinner(new SpinnerNumberModel(originW, originW / 4, originW * 4, 1));
-    wSpinner.addChangeListener(
-        new ChangeListener() {
-          @Override
-          public void stateChanged(ChangeEvent e) {
-            int newWidth = (int) wSpinner.getValue();
-            int newHeight = (int) hSpinner.getValue();
-            int picWidth = seamCarver.width();
-            int picHeight = seamCarver.height();
-            for (int i = 0; i < picWidth - newWidth; i++) seamCarver.operate(XSUB); // 0b11 for XSUB
-            for (int i = 0; i < newWidth - picWidth; i++) seamCarver.operate(XADD); // 0b00 for XADD
-            for (int i = 0; i < picHeight - newHeight; i++)
-              seamCarver.operate(YSUB); // 0b10 for YSUB
-            for (int i = 0; i < newHeight - picHeight; i++)
-              seamCarver.operate(YADD); // 0b01 for YADD
-            imageIcon.setImage(seamCarver.picture());
-            label.repaint();
-          }
-        });
+    wSpinner.addChangeListener(chgUpdate);
     hSpinner = new JSpinner(new SpinnerNumberModel(originH, originH / 4, originH * 4, 1));
-    hSpinner.addChangeListener(
-        new ChangeListener() {
-          @Override
-          public void stateChanged(ChangeEvent e) {
-            int newWidth = (int) wSpinner.getValue();
-            int newHeight = (int) hSpinner.getValue();
-            int picWidth = seamCarver.width();
-            int picHeight = seamCarver.height();
-            for (int i = 0; i < picWidth - newWidth; i++) seamCarver.operate(XSUB); // 0b11 for XSUB
-            for (int i = 0; i < newWidth - picWidth; i++) seamCarver.operate(XADD); // 0b00 for XADD
-            for (int i = 0; i < picHeight - newHeight; i++)
-              seamCarver.operate(YSUB); // 0b10 for YSUB
-            for (int i = 0; i < newHeight - picHeight; i++)
-              seamCarver.operate(YADD); // 0b01 for YADD
-            imageIcon.setImage(seamCarver.picture());
-            label.repaint();
-          }
-        });
+    hSpinner.addChangeListener(chgUpdate);
     h1.add(new JLabel("Width: "));
     h1.add(wSpinner);
     h1.add(new JLabel("Height: "));
@@ -253,27 +221,6 @@ public class GUI {
   }
 
   private void initButtons(JPanel rightPanel) {
-    JButton resizeButton = new JButton("Resize");
-    resizeButton.addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            int newWidth = (int) wSpinner.getValue();
-            int newHeight = (int) hSpinner.getValue();
-            int picWidth = seamCarver.width();
-            int picHeight = seamCarver.height();
-            for (int i = 0; i < picWidth - newWidth; i++) seamCarver.operate(XSUB); // 0b11 for XSUB
-            for (int i = 0; i < newWidth - picWidth; i++) seamCarver.operate(XADD); // 0b00 for XADD
-            for (int i = 0; i < picHeight - newHeight; i++)
-              seamCarver.operate(YSUB); // 0b10 for YSUB
-            for (int i = 0; i < newHeight - picHeight; i++)
-              seamCarver.operate(YADD); // 0b01 for YADD
-            imageIcon.setImage(seamCarver.picture());
-            label.repaint();
-          }
-        });
-    rightPanel.add(resizeButton);
-
     // 添加 "Undo" 按钮
     JButton undoButton = new JButton("Undo");
     undoButton.addMouseListener(
@@ -345,7 +292,6 @@ public class GUI {
     rightPanel.add(redoButton);
 
     JButton selectButton = new JButton("套索工具");
-    rightPanel.add(selectButton);
     selectButton.addActionListener(
         new ActionListener() {
           @Override
@@ -353,20 +299,34 @@ public class GUI {
             startSelectionTool();
           }
         });
+    rightPanel.add(selectButton);
 
     JButton restoreButton = new JButton("还原");
-    rightPanel.add(restoreButton);
     restoreButton.addActionListener(
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            seamCarver.restore();
-            imageIcon.setImage(seamCarver.picture());
+            BufferedImage originalPicture = seamCarver.originalPicture();
+            imageIcon.setImage(originalPicture);
             label.repaint();
-            wSpinner.setValue(seamCarver.width());
-            hSpinner.setValue(seamCarver.height());
+            seamCarver.restore();
+            ChangeListener[] w = wSpinner.getChangeListeners();
+            ChangeListener[] h = hSpinner.getChangeListeners();
+            for (ChangeListener i : w) wSpinner.removeChangeListener(i);
+            for (ChangeListener i : h) hSpinner.removeChangeListener(i);
+            wSpinner.setValue(originalPicture.getWidth());
+            hSpinner.setValue(originalPicture.getHeight());
+            JFormattedTextField wTextField =
+                ((JSpinner.DefaultEditor) wSpinner.getEditor()).getTextField();
+            JFormattedTextField hTextField =
+                ((JSpinner.DefaultEditor) hSpinner.getEditor()).getTextField();
+            wTextField.setValue(originalPicture.getWidth());
+            hTextField.setValue(originalPicture.getHeight());
+            for (ChangeListener i : w) wSpinner.addChangeListener(i);
+            for (ChangeListener i : h) hSpinner.addChangeListener(i);
           }
         });
+    rightPanel.add(restoreButton);
   }
 
   private void initMenuBar() {
@@ -433,5 +393,28 @@ public class GUI {
     // 点击则弹出一个对话框，用于提示用户进行套索选区
     JOptionPane.showMessageDialog(
         frame, "请在图像上用鼠标拖动进行选区。", "套索工具", JOptionPane.INFORMATION_MESSAGE);
+  }
+
+  private void initAllActions() {
+    chgUpdate =
+        new ChangeListener() {
+          @Override
+          public void stateChanged(javax.swing.event.ChangeEvent e) {
+            int newWidth = (int) wSpinner.getValue();
+            int newHeight = (int) hSpinner.getValue();
+            if (newWidth < seamCarver.width()) {
+              for (int i = 0; i < seamCarver.width() - newWidth; i++) seamCarver.operate(XSUB);
+            } else if (newWidth > seamCarver.width()) {
+              for (int i = 0; i < newWidth - seamCarver.width(); i++) seamCarver.operate(XADD);
+            }
+            if (newHeight < seamCarver.height()) {
+              for (int i = 0; i < seamCarver.height() - newHeight; i++) seamCarver.operate(YSUB);
+            } else if (newHeight > seamCarver.height()) {
+              for (int i = 0; i < newHeight - seamCarver.height(); i++) seamCarver.operate(YADD);
+            }
+            imageIcon.setImage(seamCarver.picture());
+            label.repaint();
+          }
+        };
   }
 }

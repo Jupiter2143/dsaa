@@ -8,6 +8,7 @@ public class SeamCarver implements ISeamCarver {
   private BufferedImage picture;
   private BufferedImage originPicture; // original picture
   private float[][] energyMap; // energy map, 2d array to store the energy of the pixel
+  private float[][] originalEnergyMap; // original energy map
   private float[][] mask;
   private boolean maskFlag = false;
   private boolean splitFlag = false;
@@ -38,6 +39,11 @@ public class SeamCarver implements ISeamCarver {
       this.width = picture.getWidth();
       this.height = picture.getHeight();
       calEnergyMap();
+      int W = width;
+      int H = height;
+      originalEnergyMap = new float[H][W];
+      for (int y = 0; y < H; y++)
+        for (int x = 0; x < W; x++) originalEnergyMap[y][x] = energyMap[y][x];
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -47,6 +53,12 @@ public class SeamCarver implements ISeamCarver {
   @Override
   public BufferedImage picture() {
     return this.picture;
+  }
+
+  // original picture
+  @Override
+  public BufferedImage originalPicture() {
+    return this.originPicture;
   }
 
   @Override
@@ -440,7 +452,11 @@ public class SeamCarver implements ISeamCarver {
     picture = originPicture;
     width = picture.getWidth();
     height = picture.getHeight();
-    calEnergyMap();
+    int W = originalEnergyMap[0].length;
+    int H = originalEnergyMap.length;
+    energyMap = new float[H][W];
+    for (int y = 0; y < H; y++)
+      for (int x = 0; x < W; x++) energyMap[y][x] = originalEnergyMap[y][x];
     maskFlag = false;
     splitFlag = false;
     undoStack.clear();
