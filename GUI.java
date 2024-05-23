@@ -12,7 +12,7 @@ public class GUI {
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
   private JFrame frame = new JFrame("Seam Carver");
-  private SeamCarver seamCarver = new SeamCarver("example.jpg");
+  private SeamCarver seamCarver = new SeamCarver("image.png");
   private JPanel panel = new JPanel();
   private JLabel label = new JLabel();
   private JSpinner wSpinner;
@@ -92,12 +92,12 @@ public class GUI {
 
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
-    label.setPreferredSize(new Dimension(width, height));
+    label.setPreferredSize(new Dimension(height,width));
 
     JScrollPane scrollPane = new JScrollPane(label);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    highlight = new boolean[width][height];
+    highlight = new boolean[height][width];
 
     label.addMouseListener(
         new MouseAdapter() {
@@ -139,18 +139,6 @@ public class GUI {
         });
   }
 
-  // 更新高亮矩阵
-  private void updateHighlightMatrix() {
-    for (int i = 0; i < highlight.length; i++) {
-      for (int j = 0; j < highlight[0].length; j++) {
-        highlight[i][j] = false;
-      }
-    }
-
-    updateHighlightForPoints(highPriorityPoints);
-    updateHighlightForPoints(lowPriorityPoints);
-  }
-
   private void updateHighlightForPoints(ArrayList<Point> points) {
     if (points.size() < 3) return;
 
@@ -159,10 +147,10 @@ public class GUI {
       polygon.addPoint(point.x, point.y);
     }
 
-    for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-      for (int y = 0; y < imageIcon.getIconHeight(); y++) {
-        if (polygon.contains(x, y)) {
-          highlight[x][y] = true;
+    for (int y = 0; y < imageIcon.getIconHeight(); y++) {
+      for (int x = 0; x < imageIcon.getIconWidth(); x++) {
+        if (polygon.contains(y,x)) {
+          highlight[y][x] = true;
         }
       }
     }
@@ -171,16 +159,16 @@ public class GUI {
   private float[][] calculateEnergyWithHighlight() {
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
-    float[][] mask = new float[width][height];
+    float[][] mask = new float[height][width];
 
-    for (int x = 0; x < width; x++) {
-      for (int y = 0; y < height; y++) {
-        mask[x][y] = 0;
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        mask[y][x] = 0;
       }
     }
 
-    applyPriorityToMask(highPriorityPoints, mask, -1e9f);
-    applyPriorityToMask(lowPriorityPoints, mask, 1e9f);
+    applyPriorityToMask(highPriorityPoints, mask, 1e5f);
+    applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 
     return mask;
   }
@@ -193,10 +181,10 @@ public class GUI {
       polygon.addPoint(point.x, point.y);
     }
 
-    for (int x = 0; x < mask.length; x++) {
-      for (int y = 0; y < mask[0].length; y++) {
-        if (polygon.contains(x, y)) {
-          mask[x][y] = value;
+    for (int y = 0; y < mask.length;y++) {
+      for (int x = 0; x < mask[0].length;x++) {
+        if (polygon.contains(y,x)) {
+          mask[y][x] = value;
         }
       }
     }
@@ -341,21 +329,10 @@ public class GUI {
           @Override
           public void actionPerformed(ActionEvent e) {
             float mask[][] = new float[seamCarver.height()][seamCarver.width()];
-            for (int y = 0; y < seamCarver.height(); y++) {
-              for (int x = 0; x < seamCarver.width(); x++) {
-                mask[y][x] = 0.0f;
-              }
-            }
-
-            // 保护100到700行
-            for (int y = 100; y < 700; y++) {
-              for (int x = 0; x < seamCarver.width(); x++) {
-                mask[y][x] = 1e9f;
-              }
-            }
+            mask=calculateEnergyWithHighlight();
             seamCarver.setMask(mask);
-          }
-        });
+        }
+      });
     rightPanel.add(setMaskButton);
 
     JButton removeMaskButton = new JButton("移除Mask");

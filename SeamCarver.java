@@ -103,7 +103,10 @@ public class SeamCarver implements ISeamCarver {
   private void calVcost() {
     Vcost = new float[height][width];
     traceMatrix = new int[height][width];
-    if (maskFlag) maskMap();
+    if (maskFlag) {
+      maskMap();
+     // maskFlag=false;
+    }
     else maskedEnergyMap = energyMap;
     for (int x = 0; x < width; x++) Vcost[0][x] = maskedEnergyMap[0][x];
     for (int y = 1; y < height; y++)
@@ -125,7 +128,10 @@ public class SeamCarver implements ISeamCarver {
   private void calHcost() {
     Hcost = new float[height][width];
     traceMatrix = new int[height][width];
-    if (maskFlag) maskMap();
+    if (maskFlag) {
+      maskMap();
+     // maskFlag=false;
+    }
     else maskedEnergyMap = energyMap;
     for (int y = 0; y < height; y++) Hcost[y][0] = maskedEnergyMap[y][0];
     for (int x = 1; x < width; x++)
