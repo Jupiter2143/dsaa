@@ -431,7 +431,7 @@ public class SeamCarver implements ISeamCarver {
     this.mask = new float[height][width];
     for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) this.mask[y][x] = mask[y][x];
     maskFlag = true;
-    // printMask();
+
     // for (int y = 0; y < height; y++) {
     //   for (int x = 0; x < width; x++) {
     //     if (mask[y][x] != 0) {

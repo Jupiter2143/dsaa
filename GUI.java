@@ -12,7 +12,7 @@ public class GUI {
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
   private JFrame frame = new JFrame("Seam Carver");
-  private SeamCarver seamCarver = new SeamCarver("example.jpg");
+  private SeamCarver seamCarver = new SeamCarver("example2.jpg");
   private JPanel panel = new JPanel();
   private JLabel label = new JLabel();
   private JSpinner wSpinner;
@@ -90,29 +90,17 @@ public class GUI {
           }
         };
 
-    //        int width = imageIcon.getIconWidth();
-    //        int height = imageIcon.getIconHeight();
-    //        label.setPreferredSize(new Dimension(width, height));
-    //
-    //        JScrollPane scrollPane = new JScrollPane(label);
-    //        panel.add(scrollPane, BorderLayout.CENTER);
-    //
-    //        highlight = new boolean[height][width];
+    int width = imageIcon.getIconWidth();
+    int height = imageIcon.getIconHeight();
+    label.setPreferredSize(new Dimension(width, height));
+
+    JScrollPane scrollPane = new JScrollPane(label);
+    panel.add(scrollPane, BorderLayout.CENTER);
+
+    highlight = new boolean[height][width];
     // 创建一个JScrollPane并将label添加进去
     label.setHorizontalAlignment(JLabel.LEFT); // 设置水平对齐方式为左对齐
     label.setVerticalAlignment(JLabel.TOP); // 设置垂直对齐方式为顶部对齐
-    JScrollPane scrollPane = new JScrollPane(label);
-
-    // 设置JScrollPane的布局管理器为null，以防止自动滚动
-    scrollPane.getVerticalScrollBar().setUnitIncrement(1);
-    scrollPane.getHorizontalScrollBar().setUnitIncrement(1);
-    scrollPane.getViewport().setLayout(null);
-
-    // 设置JLabel的位置和大小
-    int width = imageIcon.getIconWidth();
-    int height = imageIcon.getIconHeight();
-    label.setBounds(0, 0, width, height);
-    label.revalidate(); // 确保JLabel使用新的尺寸
 
     // 将JScrollPane添加到panel中
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -407,6 +395,7 @@ public class GUI {
               seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
               imageIcon.setImage(seamCarver.picture());
               label.repaint();
+
               wSpinner.removeChangeListener(chgUpdate);
               hSpinner.removeChangeListener(chgUpdate);
               wSpinner.setModel(
