@@ -12,7 +12,8 @@ public class GUI {
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
   private JFrame frame = new JFrame("Seam Carver");
-  private SeamCarver seamCarver = new SeamCarver("example2.jpg");
+  private SeamCarver seamCarver;
+  private JLabel statusBar;
   private JPanel panel = new JPanel();
   private JLabel label = new JLabel();
   private JSpinner wSpinner;
@@ -55,8 +56,8 @@ public class GUI {
 
   // 显示图、鼠标监听、套索实施
   private void initScrollPane() {
+    openFileFunc();
     imageIcon = new ImageIcon(seamCarver.picture());
-
     label =
         new JLabel(imageIcon) {
           @Override
@@ -90,14 +91,14 @@ public class GUI {
           }
         };
 
-           int width = imageIcon.getIconWidth();
-           int height = imageIcon.getIconHeight();
-           label.setPreferredSize(new Dimension(width, height));
-    
-           JScrollPane scrollPane = new JScrollPane(label);
-           panel.add(scrollPane, BorderLayout.CENTER);
-    
-           highlight = new boolean[height][width];
+    int width = imageIcon.getIconWidth();
+    int height = imageIcon.getIconHeight();
+    label.setPreferredSize(new Dimension(width, height));
+
+    JScrollPane scrollPane = new JScrollPane(label);
+    panel.add(scrollPane, BorderLayout.CENTER);
+
+    highlight = new boolean[height][width];
     // 创建一个JScrollPane并将label添加进去
     label.setHorizontalAlignment(JLabel.LEFT); // 设置水平对齐方式为左对齐
     label.setVerticalAlignment(JLabel.TOP); // 设置垂直对齐方式为顶部对齐
@@ -147,6 +148,11 @@ public class GUI {
               }
               label.repaint();
             }
+          }
+
+          @Override
+          public void mouseMoved(MouseEvent e) {
+            statusBar.setText("x: " + e.getX() + ", y: " + e.getY());
           }
         });
   }
@@ -382,10 +388,8 @@ public class GUI {
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            // 实现打开文件的逻辑
-            // JFileChooser fileChooser = new JFileChooser();
-            // 打开到当前目录
             JFileChooser fileChooser = new JFileChooser(".");
+            fileChooser.setDialogTitle("请选择一张图片");
             int result = fileChooser.showOpenDialog(frame);
             if (result == JFileChooser.APPROVE_OPTION) {
               seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
@@ -438,7 +442,7 @@ public class GUI {
   }
 
   private void initStatusBar() {
-    JLabel statusBar = new JLabel("状态栏");
+    statusBar = new JLabel("状态栏");
     statusBar.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     frame.add(statusBar, BorderLayout.SOUTH);
   }
@@ -475,5 +479,13 @@ public class GUI {
             label.revalidate();
           }
         };
+  }
+
+  private void openFileFunc() {
+    JFileChooser fileChooser = new JFileChooser(".");
+    fileChooser.setDialogTitle("请选择一张图片");
+    int result = fileChooser.showOpenDialog(frame);
+    if (result == JFileChooser.APPROVE_OPTION)
+      seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
   }
 }

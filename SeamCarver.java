@@ -1,5 +1,4 @@
-// import edu.princeton.cs.algs4.Picture;
-import java.awt.image.BufferedImage; // no longer use edu.princeton.cs.algs4.Picture
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Stack;
 import javax.imageio.ImageIO;
@@ -46,6 +45,8 @@ public class SeamCarver implements ISeamCarver {
         for (int x = 0; x < W; x++) originalEnergyMap[y][x] = energyMap[y][x];
     } catch (Exception e) {
       e.printStackTrace();
+      System.out.println("File open failed");
+      System.exit(1);
     }
   }
 
@@ -121,15 +122,6 @@ public class SeamCarver implements ISeamCarver {
               Utils.minIndex(Vcost[y - 1][x - 1], Vcost[y - 1][x], Vcost[y - 1][x + 1]);
           Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         }
-
-    // print Vcost
-
-    // for (int y = 0; y < height; y++) {
-    //   for (int x = 0; x < width; x++) {
-    //     System.out.print("Vcost[" + y + "][" + x + "] = " + Vcost[y][x] + " ");
-    //   }
-    //   System.out.println();
-    // }
   }
 
   // calculate Hcost matrix
