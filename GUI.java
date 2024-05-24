@@ -306,6 +306,7 @@ private void clearSelection() {
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            startSelectionTool();
             startselectiontool();
           }
         });
