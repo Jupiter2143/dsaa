@@ -12,7 +12,7 @@ public class GUI {
   private static final int XSUB = 0b11;
   private static final int YSUB = 0b10;
   private JFrame frame = new JFrame("Seam Carver");
-  private SeamCarver seamCarver = new SeamCarver("image.png");
+  private SeamCarver seamCarver = new SeamCarver("example.jpg");
   private JPanel panel = new JPanel();
   private JLabel label = new JLabel();
   private JSpinner wSpinner;
@@ -26,6 +26,7 @@ public class GUI {
   private ChangeListener chgUpdate;
   private ArrayList<Point> highPriorityPoints = new ArrayList<>();
   private ArrayList<Point> lowPriorityPoints = new ArrayList<>();
+  private boolean selectionToolActive = false;
 
   public GUI() {
     initAllActions();
@@ -103,39 +104,45 @@ public class GUI {
         new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
-            if (SwingUtilities.isLeftMouseButton(e)) {
-              highPriorityPoints.clear();
-              highPriorityPoints.add(e.getPoint());
-            } else if (SwingUtilities.isRightMouseButton(e)) {
-              lowPriorityPoints.clear();
-              lowPriorityPoints.add(e.getPoint());
-            }
-            label.repaint();
+            if (selectionToolActive) {
+              if (SwingUtilities.isLeftMouseButton(e)) {
+                highPriorityPoints.clear();
+                highPriorityPoints.add(e.getPoint());
+              } else if (SwingUtilities.isRightMouseButton(e)) {
+                lowPriorityPoints.clear();
+                lowPriorityPoints.add(e.getPoint());
+              }
+              label.repaint();
           }
+        } 
 
           @Override
           public void mouseReleased(MouseEvent e) {
-            if (SwingUtilities.isLeftMouseButton(e)) {
-              highPriorityPoints.add(e.getPoint());
-            } else if (SwingUtilities.isRightMouseButton(e)) {
-              lowPriorityPoints.add(e.getPoint());
-            }
-            label.repaint();
-            seamCarver.setMask(calculateEnergyWithHighlight());
-          }
+            if (selectionToolActive) {
+              if (SwingUtilities.isLeftMouseButton(e)) {
+                highPriorityPoints.add(e.getPoint());
+              } else if (SwingUtilities.isRightMouseButton(e)) {
+                lowPriorityPoints.add(e.getPoint());
+              }
+              label.repaint();
+              seamCarver.setMask(calculateEnergyWithHighlight());
+            }  
+        }
         });
 
     label.addMouseMotionListener(
         new MouseMotionAdapter() {
           @Override
           public void mouseDragged(MouseEvent e) {
-            if (SwingUtilities.isLeftMouseButton(e)) {
-              highPriorityPoints.add(e.getPoint());
-            } else if (SwingUtilities.isRightMouseButton(e)) {
-              lowPriorityPoints.add(e.getPoint());
-            }
-            label.repaint();
+            if (selectionToolActive) {
+              if (SwingUtilities.isLeftMouseButton(e)) {
+                highPriorityPoints.add(e.getPoint());
+              } else if (SwingUtilities.isRightMouseButton(e)) {
+                lowPriorityPoints.add(e.getPoint());
+              }
+              label.repaint();
           }
+        }
         });
   }
 
@@ -167,8 +174,8 @@ public class GUI {
       }
     }
 
-    applyPriorityToMask(highPriorityPoints, mask, 1e5f);
-    applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
+    applyPriorityToMask(highPriorityPoints, mask, width*1.2f);
+    applyPriorityToMask(lowPriorityPoints, mask, -height*1.2f);
 
     return mask;
   }
@@ -190,6 +197,14 @@ public class GUI {
     }
   }
 
+  private void startselectiontool() {
+    selectionToolActive = true;
+}
+
+private void clearSelection() {
+  highPriorityPoints.clear(); 
+  lowPriorityPoints.clear();
+}
   private void initRightPanel() {
     JPanel rightPanel = new JPanel();
     rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
@@ -291,7 +306,7 @@ public class GUI {
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            startSelectionTool();
+            startselectiontool();
           }
         });
     rightPanel.add(selectButton);
@@ -331,6 +346,7 @@ public class GUI {
             float mask[][] = new float[seamCarver.height()][seamCarver.width()];
             mask=calculateEnergyWithHighlight();
             seamCarver.setMask(mask);
+            clearSelection();
         }
       });
     rightPanel.add(setMaskButton);
