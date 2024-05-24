@@ -32,7 +32,7 @@ public class GUI {
   private JButton selectButton = new JButton("套索工具");
   private JCheckBox selectionCheckBox = new JCheckBox();
   private JButton setMaskButton = new JButton("确定");
-  private JButton removeMaskButton = new JButton("移除选中区域");
+  private JButton removeMaskButton = new JButton("取消区域");
   private JButton saveButton = new JButton("保存");
   private JButton restoreButton = new JButton("还原");
 
@@ -135,6 +135,7 @@ public class GUI {
     h2.setMaximumSize(new Dimension(300, 80));
     h2.add(selectButton);
     h2.add(selectionCheckBox);
+    selectionCheckBox.setText("开启");
     h2.add(setMaskButton);
     h2.add(removeMaskButton);
     rightPanel.add(h2);
@@ -267,9 +268,17 @@ public class GUI {
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            if (highPriorityPoints.isEmpty() && lowPriorityPoints.isEmpty()) {
+              JOptionPane.showMessageDialog(
+                  frame, "请先用鼠标在图像上画出选区", "错误", JOptionPane.ERROR_MESSAGE);
+              return;
+            }
             JOptionPane.showMessageDialog(
                 frame, "选中区域成功", "选中区域成功", JOptionPane.INFORMATION_MESSAGE);
             clearSelection();
+            highPriorityPoints.clear();
+            lowPriorityPoints.clear();
+            label.repaint();
           }
         });
 
@@ -279,8 +288,12 @@ public class GUI {
           @Override
           public void actionPerformed(ActionEvent e) {
             JOptionPane.showMessageDialog(
-                frame, "成功移除选中区域", "成功移除选中区域", JOptionPane.INFORMATION_MESSAGE);
+                frame, "成功移除选中区域的保护与易除性", "成功", JOptionPane.INFORMATION_MESSAGE);
             seamCarver.removeMask();
+            clearSelection();
+            highPriorityPoints.clear();
+            lowPriorityPoints.clear();
+            label.repaint();
           }
         });
   }
@@ -336,9 +349,9 @@ public class GUI {
 
     JMenu helpMenu = new JMenu("帮助");
     JMenuItem menuItemAbout = new JMenuItem("关于");
-    JMenuItem menuItemUs = new JMenuItem("我们");
+    JMenuItem menuItemTips = new JMenuItem("贴士和技巧");
     helpMenu.add(menuItemAbout);
-    helpMenu.add(menuItemUs);
+    helpMenu.add(menuItemTips);
 
     menuItemAbout.addActionListener(
         new ActionListener() {
@@ -356,6 +369,23 @@ public class GUI {
           }
         });
 
+    menuItemTips.addActionListener(
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            JOptionPane.showMessageDialog(
+                frame,
+                "<html>1. 长按spinBox右侧的上下按钮可连续增大或减小数值<br>"
+                    + "2. 在spinBox中输入数值后按回车键可直接修改图片大小<br>"
+                    + "3. 状态栏显示鼠标当前位置的坐标<br>"
+                    + "4. 长按撤销和重做按钮可连续撤销或重做<br>"
+                    + "5. 点击套索工具按钮后，用鼠标在图片上拖动即可选中区域<br>"
+                    + "6. 点击保存按钮可将当前图片保存到本地<br>"
+                    + "7. 点击还原按钮可还原到原始图片<br>",
+                "贴士和技巧",
+                JOptionPane.INFORMATION_MESSAGE);
+          }
+        });
     menuBar.add(fileMenu);
     menuBar.add(helpMenu);
     frame.setJMenuBar(menuBar);
