@@ -90,14 +90,30 @@ public class GUI {
                     }
                 };
 
+        //        int width = imageIcon.getIconWidth();
+//        int height = imageIcon.getIconHeight();
+//        label.setPreferredSize(new Dimension(width, height));
+//
+//        JScrollPane scrollPane = new JScrollPane(label);
+//        panel.add(scrollPane, BorderLayout.CENTER);
+//
+//        highlight = new boolean[height][width];
+        // 创建一个JScrollPane并将label添加进去
+        JScrollPane scrollPane = new JScrollPane(label);
+
+        // 设置JScrollPane的布局管理器为null，以防止自动滚动
+        scrollPane.getVerticalScrollBar().setUnitIncrement(1);
+        scrollPane.getHorizontalScrollBar().setUnitIncrement(1);
+        scrollPane.getViewport().setLayout(null);
+
+        // 设置JLabel的位置和大小
         int width = imageIcon.getIconWidth();
         int height = imageIcon.getIconHeight();
-        label.setPreferredSize(new Dimension(width, height));
+        label.setBounds(0, 0, width, height);
+        label.revalidate(); // 确保JLabel使用新的尺寸
 
-        JScrollPane scrollPane = new JScrollPane(label);
+        // 将JScrollPane添加到panel中
         panel.add(scrollPane, BorderLayout.CENTER);
-
-        highlight = new boolean[height][width];
 
     label.addMouseListener(
         new MouseAdapter() {
