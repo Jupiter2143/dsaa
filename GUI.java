@@ -22,13 +22,12 @@ public class GUI {
   private boolean[][] highlight; // 套索内矩阵
   private volatile boolean runningUndo = false;
   private volatile boolean runningRedo = false;
-  private ActionListener actUpdate;
   private ChangeListener chgUpdate;
   private ArrayList<Point> highPriorityPoints = new ArrayList<>();
   private ArrayList<Point> lowPriorityPoints = new ArrayList<>();
 
   public GUI() {
-    initAllActions();
+    initAllListener();
     initMainWindow();
     initMainPanel();
     frame.setVisible(true);
@@ -92,7 +91,7 @@ public class GUI {
 
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
-    label.setPreferredSize(new Dimension(height,width));
+    label.setPreferredSize(new Dimension(width, height));
 
     JScrollPane scrollPane = new JScrollPane(label);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -149,7 +148,7 @@ public class GUI {
 
     for (int y = 0; y < imageIcon.getIconHeight(); y++) {
       for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-        if (polygon.contains(y,x)) {
+        if (polygon.contains(y, x)) {
           highlight[y][x] = true;
         }
       }
@@ -169,6 +168,7 @@ public class GUI {
 
     applyPriorityToMask(highPriorityPoints, mask, 1e5f);
     applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
+    // System.out.println("Finish calculate energy with highlight");
 
     return mask;
   }
@@ -181,9 +181,9 @@ public class GUI {
       polygon.addPoint(point.x, point.y);
     }
 
-    for (int y = 0; y < mask.length;y++) {
-      for (int x = 0; x < mask[0].length;x++) {
-        if (polygon.contains(y,x)) {
+    for (int y = 0; y < mask.length; y++) {
+      for (int x = 0; x < mask[0].length; x++) {
+        if (polygon.contains(y, x)) {
           mask[y][x] = value;
         }
       }
@@ -329,10 +329,10 @@ public class GUI {
           @Override
           public void actionPerformed(ActionEvent e) {
             float mask[][] = new float[seamCarver.height()][seamCarver.width()];
-            mask=calculateEnergyWithHighlight();
+            mask = calculateEnergyWithHighlight();
             seamCarver.setMask(mask);
-        }
-      });
+          }
+        });
     rightPanel.add(setMaskButton);
 
     JButton removeMaskButton = new JButton("移除Mask");
@@ -362,12 +362,28 @@ public class GUI {
           @Override
           public void actionPerformed(ActionEvent e) {
             // 实现打开文件的逻辑
-            JFileChooser fileChooser = new JFileChooser();
+            // JFileChooser fileChooser = new JFileChooser();
+            // 打开到当前目录
+            JFileChooser fileChooser = new JFileChooser(".");
             int result = fileChooser.showOpenDialog(frame);
             if (result == JFileChooser.APPROVE_OPTION) {
               seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
               imageIcon.setImage(seamCarver.picture());
               label.repaint();
+              wSpinner.removeChangeListener(chgUpdate);
+              hSpinner.removeChangeListener(chgUpdate);
+              wSpinner.setModel(
+                  new SpinnerNumberModel(
+                      seamCarver.width(), seamCarver.width() / 4, seamCarver.width() * 4, 1));
+              hSpinner.setModel(
+                  new SpinnerNumberModel(
+                      seamCarver.height(), seamCarver.height() / 4, seamCarver.height() * 4, 1));
+              wSpinner.setValue(seamCarver.width());
+              hSpinner.setValue(seamCarver.height());
+              wSpinner.addChangeListener(chgUpdate);
+              hSpinner.addChangeListener(chgUpdate);
+              label.setPreferredSize(new Dimension(seamCarver.width(), seamCarver.height()));
+              label.revalidate();
             }
           }
         });
@@ -412,7 +428,7 @@ public class GUI {
         frame, "请在图像上用鼠标拖动进行选区。", "套索工具", JOptionPane.INFORMATION_MESSAGE);
   }
 
-  private void initAllActions() {
+  private void initAllListener() {
     chgUpdate =
         new ChangeListener() {
           @Override
@@ -431,6 +447,8 @@ public class GUI {
             }
             imageIcon.setImage(seamCarver.picture());
             label.repaint();
+            label.setPreferredSize(new Dimension(newWidth, newHeight));
+            label.revalidate();
           }
         };
   }

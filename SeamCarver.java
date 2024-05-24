@@ -103,10 +103,7 @@ public class SeamCarver implements ISeamCarver {
   private void calVcost() {
     Vcost = new float[height][width];
     traceMatrix = new int[height][width];
-    if (maskFlag) {
-      maskMap();
-     // maskFlag=false;
-    }
+    if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
     for (int x = 0; x < width; x++) Vcost[0][x] = maskedEnergyMap[0][x];
     for (int y = 1; y < height; y++)
@@ -128,10 +125,7 @@ public class SeamCarver implements ISeamCarver {
   private void calHcost() {
     Hcost = new float[height][width];
     traceMatrix = new int[height][width];
-    if (maskFlag) {
-      maskMap();
-     // maskFlag=false;
-    }
+    if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
     for (int y = 0; y < height; y++) Hcost[y][0] = maskedEnergyMap[y][0];
     for (int x = 1; x < width; x++)
@@ -230,7 +224,6 @@ public class SeamCarver implements ISeamCarver {
       picture = newPicture;
       width--;
     } else {
-      // Picture newPicture = new Picture(width, height - 1);
       BufferedImage newPicture = new BufferedImage(width, height - 1, BufferedImage.TYPE_INT_RGB);
       Utils.parallel(
           (cpu, cpus) -> {
@@ -436,10 +429,16 @@ public class SeamCarver implements ISeamCarver {
   @Override
   public void setMask(float[][] mask) {
     this.mask = new float[height][width];
-    System.out.println("mask: " + mask.length + " " + mask[0].length);
-    System.out.println("energyMap: " + energyMap.length + " " + energyMap[0].length);
     for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) this.mask[y][x] = mask[y][x];
     maskFlag = true;
+    // printMask();
+    // for (int y = 0; y < height; y++) {
+    //   for (int x = 0; x < width; x++) {
+    //     if (mask[y][x] != 0) {
+    //       System.out.println("mask[" + y + "][" + x + "] = " + mask[y][x]);
+    //     }
+    //   }
+    // }
   }
 
   @Override
