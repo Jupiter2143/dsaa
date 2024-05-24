@@ -90,14 +90,14 @@ public class GUI {
           }
         };
 
-    int width = imageIcon.getIconWidth();
-    int height = imageIcon.getIconHeight();
-    label.setPreferredSize(new Dimension(width, height));
-
-    JScrollPane scrollPane = new JScrollPane(label);
-    panel.add(scrollPane, BorderLayout.CENTER);
-
-    highlight = new boolean[height][width];
+           int width = imageIcon.getIconWidth();
+           int height = imageIcon.getIconHeight();
+           label.setPreferredSize(new Dimension(width, height));
+    
+           JScrollPane scrollPane = new JScrollPane(label);
+           panel.add(scrollPane, BorderLayout.CENTER);
+    
+           highlight = new boolean[height][width];
     // 创建一个JScrollPane并将label添加进去
     label.setHorizontalAlignment(JLabel.LEFT); // 设置水平对齐方式为左对齐
     label.setVerticalAlignment(JLabel.TOP); // 设置垂直对齐方式为顶部对齐
@@ -351,9 +351,6 @@ public class GUI {
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            float mask[][] = new float[seamCarver.height()][seamCarver.width()];
-            mask = calculateEnergyWithHighlight();
-            seamCarver.setMask(mask);
             clearSelection();
           }
         });
@@ -394,7 +391,6 @@ public class GUI {
               seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
               imageIcon.setImage(seamCarver.picture());
               label.repaint();
-
               wSpinner.removeChangeListener(chgUpdate);
               hSpinner.removeChangeListener(chgUpdate);
               wSpinner.setModel(
