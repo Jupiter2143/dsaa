@@ -11,6 +11,7 @@ interface ISeamCarver {
   // get picture
   BufferedImage picture();
 
+  // get original picture
   BufferedImage originalPicture();
 
   // add mask to protect some pixels or try to remove some pixels
