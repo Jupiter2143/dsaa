@@ -13,6 +13,6 @@ clean:
 	del build\*.class
 
 run: all
-	java -cp build Test > output.txt
+	java -cp build Main > output.txt
 
 .PHONY: all clean run

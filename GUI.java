@@ -20,13 +20,19 @@ public class GUI {
   private JSpinner hSpinner;
   private ImageIcon imageIcon;
   private ArrayList<Point> points = new ArrayList<>(); // 存储套索选区的所有点
-  private boolean[][] highlight; // 套索内矩阵
   private volatile boolean runningUndo = false;
   private volatile boolean runningRedo = false;
   private ChangeListener chgUpdate;
   private ArrayList<Point> highPriorityPoints = new ArrayList<>();
   private ArrayList<Point> lowPriorityPoints = new ArrayList<>();
   private boolean selectionToolActive = false;
+  private JButton undoButton = new JButton("撤销");
+  private JButton redoButton = new JButton("重做");
+  private JButton selectButton = new JButton("套索工具");
+  private JCheckBox selectionCheckBox = new JCheckBox();
+  private JButton setMaskButton = new JButton("确定");
+  private JButton removeMaskButton = new JButton("移除选中区域");
+  private JButton restoreButton = new JButton("还原");
 
   public GUI() {
     initAllListener();
@@ -56,6 +62,7 @@ public class GUI {
 
   // 显示图、鼠标监听、套索实施
   private void initScrollPane() {
+    JScrollPane scrollPane = new JScrollPane(label);
     openFileFunc();
     imageIcon = new ImageIcon(seamCarver.picture());
     label =
@@ -94,17 +101,8 @@ public class GUI {
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
     label.setPreferredSize(new Dimension(width, height));
-
-    JScrollPane scrollPane = new JScrollPane(label);
-    panel.add(scrollPane, BorderLayout.CENTER);
-
-    highlight = new boolean[height][width];
-    // 创建一个JScrollPane并将label添加进去
-    label.setHorizontalAlignment(JLabel.LEFT); // 设置水平对齐方式为左对齐
-    label.setVerticalAlignment(JLabel.TOP); // 设置垂直对齐方式为顶部对齐
-
-    // 将JScrollPane添加到panel中
-    panel.add(scrollPane, BorderLayout.CENTER);
+    label.setHorizontalAlignment(JLabel.LEFT);
+    label.setVerticalAlignment(JLabel.TOP);
 
     label.addMouseListener(
         new MouseAdapter() {
@@ -155,23 +153,7 @@ public class GUI {
             statusBar.setText("x: " + e.getX() + ", y: " + e.getY());
           }
         });
-  }
-
-  private void updateHighlightForPoints(ArrayList<Point> points) {
-    if (points.size() < 3) return;
-
-    Polygon polygon = new Polygon();
-    for (Point point : points) {
-      polygon.addPoint(point.x, point.y);
-    }
-
-    for (int y = 0; y < imageIcon.getIconHeight(); y++) {
-      for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-        if (polygon.contains(x, y)) {
-          highlight[y][x] = true;
-        }
-      }
-    }
+    panel.add(scrollPane, BorderLayout.CENTER);
   }
 
   private float[][] calculateEnergyWithHighlight() {
@@ -208,10 +190,6 @@ public class GUI {
     }
   }
 
-  private void startselectiontool() {
-    selectionToolActive = true;
-  }
-
   private void clearSelection() {
     highPriorityPoints.clear();
     lowPriorityPoints.clear();
@@ -243,8 +221,7 @@ public class GUI {
   }
 
   private void initButtons(JPanel rightPanel) {
-    // 添加 "Undo" 按钮
-    JButton undoButton = new JButton("Undo");
+
     undoButton.addMouseListener(
         new MouseAdapter() {
           @Override
@@ -278,8 +255,6 @@ public class GUI {
         });
     rightPanel.add(undoButton);
 
-    // 添加 "Redo" 按钮
-    JButton redoButton = new JButton("Redo");
     redoButton.addMouseListener(
         new MouseAdapter() {
           @Override
@@ -313,18 +288,29 @@ public class GUI {
         });
     rightPanel.add(redoButton);
 
-    JButton selectButton = new JButton("套索工具");
+    selectionCheckBox.addItemListener(
+        new ItemListener() {
+          @Override
+          public void itemStateChanged(ItemEvent e) {
+            selectionToolActive = e.getStateChange() == ItemEvent.SELECTED;
+          }
+        });
     selectButton.addActionListener(
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
-            startSelectionTool();
-            startselectiontool();
+            JOptionPane.showMessageDialog(
+                frame,
+                "<html>请在图像上用鼠标拖动进行选区<br>画出保护区域请用鼠标左键（显示为红色）<br>画出消除区域请用鼠标右键（显示为绿色）</html>",
+                "套索工具",
+                JOptionPane.INFORMATION_MESSAGE);
+            selectionToolActive = true;
+            selectionCheckBox.setSelected(true);
           }
         });
     rightPanel.add(selectButton);
+    rightPanel.add(selectionCheckBox);
 
-    JButton restoreButton = new JButton("还原");
     restoreButton.addActionListener(
         new ActionListener() {
           @Override
@@ -352,7 +338,6 @@ public class GUI {
         });
     rightPanel.add(restoreButton);
 
-    JButton setMaskButton = new JButton("设置Mask");
     setMaskButton.addActionListener(
         new ActionListener() {
           @Override
@@ -362,11 +347,12 @@ public class GUI {
         });
     rightPanel.add(setMaskButton);
 
-    JButton removeMaskButton = new JButton("移除Mask");
     removeMaskButton.addActionListener(
         new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent e) {
+            JOptionPane.showMessageDialog(
+                frame, "移除选中区域", "移除选中区域", JOptionPane.INFORMATION_MESSAGE);
             seamCarver.removeMask();
           }
         });
@@ -447,15 +433,6 @@ public class GUI {
     frame.add(statusBar, BorderLayout.SOUTH);
   }
 
-  private void startSelectionTool() {
-    // 点击则弹出一个对话框，用于提示用户进行套索选区
-    JOptionPane.showMessageDialog(
-        frame,
-        "请在图像上用鼠标拖动进行选区。画出保护区域请用鼠标左键（显示为红色），画出消除区域请用鼠标右键（显示为绿色）。",
-        "套索工具",
-        JOptionPane.INFORMATION_MESSAGE);
-  }
-
   private void initAllListener() {
     chgUpdate =
         new ChangeListener() {
@@ -485,7 +462,12 @@ public class GUI {
     JFileChooser fileChooser = new JFileChooser(".");
     fileChooser.setDialogTitle("请选择一张图片");
     int result = fileChooser.showOpenDialog(frame);
-    if (result == JFileChooser.APPROVE_OPTION)
+    if (result == JFileChooser.APPROVE_OPTION) {
       seamCarver = new SeamCarver(fileChooser.getSelectedFile().getAbsolutePath());
+    } else {
+      System.exit(0);
+    }
   }
+
+  private void initLabel() {}
 }
