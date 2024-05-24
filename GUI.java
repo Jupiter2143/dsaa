@@ -161,7 +161,7 @@ public class GUI {
 
     for (int y = 0; y < imageIcon.getIconHeight(); y++) {
       for (int x = 0; x < imageIcon.getIconWidth(); x++) {
-        if (polygon.contains(y, x)) {
+        if (polygon.contains(x, y)) {
           highlight[y][x] = true;
         }
       }
@@ -181,7 +181,6 @@ public class GUI {
 
     applyPriorityToMask(highPriorityPoints, mask, 1e5f);
     applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
-    // System.out.println("Finish calculate energy with highlight");
 
     return mask;
   }
@@ -196,7 +195,7 @@ public class GUI {
 
     for (int y = 0; y < mask.length; y++) {
       for (int x = 0; x < mask[0].length; x++) {
-        if (polygon.contains(y, x)) {
+        if (polygon.contains(x, y)) {
           mask[y][x] = value;
         }
       }

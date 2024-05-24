@@ -97,6 +97,7 @@ public class SeamCarver implements ISeamCarver {
           for (int y = cpu; y < height; y += cpus)
             for (int x = 0; x < width; x++) maskedEnergyMap[y][x] = energyMap[y][x] + mask[y][x];
         });
+    // print mask
   }
 
   // calculate Vcost matrix
@@ -105,6 +106,7 @@ public class SeamCarver implements ISeamCarver {
     traceMatrix = new int[height][width];
     if (maskFlag) maskMap();
     else maskedEnergyMap = energyMap;
+
     for (int x = 0; x < width; x++) Vcost[0][x] = maskedEnergyMap[0][x];
     for (int y = 1; y < height; y++)
       for (int x = 0; x < width; x++)
@@ -119,6 +121,15 @@ public class SeamCarver implements ISeamCarver {
               Utils.minIndex(Vcost[y - 1][x - 1], Vcost[y - 1][x], Vcost[y - 1][x + 1]);
           Vcost[y][x] = maskedEnergyMap[y][x] + Vcost[y - 1][x + traceMatrix[y][x]];
         }
+
+    // print Vcost
+
+    // for (int y = 0; y < height; y++) {
+    //   for (int x = 0; x < width; x++) {
+    //     System.out.print("Vcost[" + y + "][" + x + "] = " + Vcost[y][x] + " ");
+    //   }
+    //   System.out.println();
+    // }
   }
 
   // calculate Hcost matrix
@@ -155,6 +166,11 @@ public class SeamCarver implements ISeamCarver {
       }
     seam[height - 1] = index;
     for (int y = height - 2; y >= 0; y--) seam[y] = seam[y + 1] + traceMatrix[y + 1][seam[y + 1]];
+    // print seam
+    System.out.println("seam.length = " + seam.length);
+    for (int i = 0; i < seam.length; i++) {
+      System.out.println("seam[" + i + "] = " + seam[i]);
+    }
     return seam;
   }
 
