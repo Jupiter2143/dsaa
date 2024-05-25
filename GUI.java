@@ -68,7 +68,7 @@ public class GUI {
     panel.add(scrollPane, BorderLayout.CENTER);
   }
 
-  private float[][] calculateEnergyWithHighlight() {
+  private float[][] calculateMask() {
     int width = imageIcon.getIconWidth();
     int height = imageIcon.getIconHeight();
     float[][] mask = new float[height][width];
@@ -509,7 +509,7 @@ public class GUI {
                 lowPriorityPoints.add(e.getPoint());
               }
               label.repaint();
-              seamCarver.setMask(calculateEnergyWithHighlight());
+              seamCarver.setMask(calculateMask());
             }
           }
         });
