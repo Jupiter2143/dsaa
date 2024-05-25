@@ -218,5 +218,34 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 
 ## 优化与总结
 
+1. 每次扩图和缩图后，更新能量图时，我们可以只更新`seam`附近的能量值，而不是整个能量图以减少计算量。
+2. 在撤销和重做操作中，我们可以只存储`seam`附近的像素点，而不是整个像素点数组以减少内存占用。
+3. 使用了cpu多线程来加速计算
+   ```java
+   interface ParallelFunc {
+       void process(int cpu, int cpus);
+   }
+   
+   public static void parallel(ParallelFunc func) {
+       int cpus = Runtime.getRuntime().availableProcessors();
+   
+       Thread[] threads = new Thread[cpus];
+       for (int i = 0; i < cpus; i++) {
+           int cpu = i;
+           threads[cpu] = new Thread(() -> func.process(cpu, cpus));
+       }
+   
+       for (Thread thread : threads) {
+           thread.start();
+       }
+   
+       try {
+           for (Thread thread : threads) {
+               thread.join();
+           }
+       } catch (InterruptedException ignored) {
+       }
+   }
+   ```
 
 ## 参考文献
