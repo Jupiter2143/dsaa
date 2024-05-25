@@ -222,6 +222,21 @@ private void drawPolygon(Graphics2D g2d, ArrayList<Point> points, Color color) {
 applyPriorityToMask(highPriorityPoints, mask, 1e5f);
 applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 ```
+
+#### 套索功能展示
+以下面三组图像为示例，展示目标尺寸相同的基本缩图与有两种套索的缩图。
+![alt text](image-12.png)         ![alt text](image-13.png)
+图4.2.1(a)打开示例图片           图4.2.1(b)修改右上角的数值，将图片尺寸改至250*150
+
+![alt text](image-14.png)               ![alt text](image-15.png)
+图4.2.2(a)还原，用红色保护套索框选天空    图4.2.2(b)确定套索，将图片尺寸改至250*150
+
+![alt text](image-16.png)                ![alt text](image-17.png)
+图4.2.3(a)还原，用绿色删除套索框选天空    图4.2.3(b)确定套索，将图片尺寸改至250*150
+
+对比上面三组图后我们发现，第一组中天空部分的高度明显缩小，但在第二组图中用红色保护套索框选天空后缩图时，天空的高度没有变化，说明成功完成了对其的保护。
+在第三组图中，我们用绿色删除套索框选了原图的主体之一，右侧的人物。在缩图后，右侧的人物被删去了，说明成功完成了对其的删除。
+
 ## 优化与总结
 
 ### 优化
