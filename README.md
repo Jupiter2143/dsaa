@@ -177,9 +177,9 @@ else if (x >= seam[y]) newMask[y][x] = mask[y][x + 1];
 <p align="center">
     <img src="Documentation/image-12.png" width=50% />
 </p>
+
 ### 功能展示
 
-### 套索部分
 #### 按钮设计
 首先为了用户良好体验，套索按键在监听用户点击后跳出对应说明窗口内容`“请在图像上用鼠标拖动进行选区，画出保护区域请用鼠标左键（显示为红色），画出消除区域请用鼠标右键（显示为绿色）”`，并开始使用`selectionToolActive`以及`selectionCheckBox.setSelected`进行内容判定。
 #### 具体实现
