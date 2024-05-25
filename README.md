@@ -230,16 +230,21 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
     <img src="Documentation/image-15.png" alt="修改右上角的数值，将图片尺寸改至250*150" width=45%; margin-left=10px />
 </p>
 
+左图：打开示例图片；右图：修改右上角的数值，将图片尺寸改至250*150。
+
 <p align="center">
     <img src="Documentation/image-14.png" alt="用红色保护套索框选天空" width=45%; margin-right=10px />
     <img src="Documentation/image-15.png" alt="确定套索，将图片尺寸改至250*150" width=45%; margin-left=10px />
 </p>
+
+左图：用红色保护套索框选天空；右图：确定套索，将图片尺寸改至250*150。
 
 <p align="center">
     <img src="Documentation/image-16.png" alt="用绿色删除套索框选天空" width=45%; margin-right=10px />
     <img src="Documentation/image-17.png" alt="确定套索，将图片尺寸改至250*150" width=45%; margin-left=10px />
 </p>
 
+左图：用绿色删除套索框选天空；右图：确定套索，将图片尺寸改至250*150。
 
 对比上面三组图后我们发现，第一组中天空部分的高度明显缩小，但在第二组图中用红色保护套索框选天空后缩图时，天空的高度没有变化，说明成功完成了对其的保护。
 在第三组图中，我们用绿色删除套索框选了原图的主体之一，右侧的人物。在缩图后，右侧的人物被删去了，说明成功完成了对其的删除。
