@@ -127,7 +127,7 @@ else if (x >= seam[y]) newMask[y][x] = mask[y][x + 1];
 要取消选中区域的保护与删除，执行`removeMask()`函数将`maskFlag`设置为`false`即可
 
 ## 前端设计
-### GUI设计及功能展示
+### GUI设计
 运行Test.java后，首先会出现弹窗如下，帮助用户从本地路径打开图片。
 ![alt text](image-1.png)
 用户从路径中选择图片打开后，会出现主窗口如下。
@@ -147,6 +147,7 @@ else if (x >= seam[y]) newMask[y][x] = mask[y][x + 1];
 ![alt text](image-9.png)
 在“操作”模块中，用户点击“保存”按钮可以保存当前版本的图像到本地，点击“还原”按钮可以一键让显示的图片变为刚打开时原始的版本。
 ![alt text](image-10.png)
+### 功能展示
 
 ## 优化与总结
 
