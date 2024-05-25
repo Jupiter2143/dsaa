@@ -1,10 +1,14 @@
 # Seam-Carving算法实现，UI设计与优化
 
 ## 成员
-| 姓名 | 学号   |
+
+| 姓名   | 学号     |
+| ------ | -------- |
 | 杨璐祯 | 12212755 |
 | 梁瑞健 | 12211812 |
-| 赵蕾悦 | 12212756 | 
+| 赵蕾悦 | 12212756 |
+
+
 ## 介绍
 SeamCarver 是一种图像处理算法，用于内容感知缩放（Content-Aware Image Resizing）。其主要目的是在保持图像关键内容的前提下，智能地调整图像尺寸。该算法通过在图像中找到“无缝路径”（seams），并移除这些路径来缩小图像，或插入这些路径来放大图像。SeamCarver 由 Shai Avidan 和 Ariel Shamir 于2007年提出。本次project在实现SeamCarver基本算法基础上增加了UI设计与优化，最终实现了扩图、缩图、保护选中区域、删除选中区域、撤销、还原等功能。
 ## 后端计算
@@ -249,9 +253,7 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 对比上面三组图后我们发现，第一组中天空部分的高度明显缩小，但在第二组图中用红色保护套索框选天空后缩图时，天空的高度没有变化，说明成功完成了对其的保护。
 在第三组图中，我们用绿色删除套索框选了原图的主体之一，右侧的人物。在缩图后，右侧的人物被删去了，说明成功完成了对其的删除。
 
-## 优化与总结
-
-### 优化
+## 优化
 1. 每次扩图和缩图后，更新能量图时，我们可以只更新`seam`附近的能量值，而不是整个能量图以减少计算量。
 2. 在撤销和重做操作中，我们可以只存储`seam`附近的像素点，而不是整个像素点数组以减少内存占用。
 3. 使用了cpu多线程来加速计算
@@ -281,7 +283,6 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
        }
    }
    ```
-### 总结
 
 ## 参考文献
 Michael Rubinstein, Ariel Shamir, and Shai Avidan. 2008. Improved seam carving for video retargeting. ACM Trans. Graph. 27, 3 (August 2008), 1–9. https://doi.org/10.1145/1360612.1360615
