@@ -132,27 +132,47 @@ else if (x >= seam[y]) newMask[y][x] = mask[y][x + 1];
 ## 前端设计
 ### GUI设计
 运行Test.java后，首先会出现弹窗如下，帮助用户从本地路径打开图片。
-![alt text](image-1.png)
+<p align="center">
+    <img src="Documentation/image-1.png" width=50% />
+</p>
 用户从路径中选择图片打开后，会出现主窗口如下。
-![alt text](image-2.png)
+<p align="center">
+    <img src="Documentation/image-2.png" width=50% />
+</p>
 主窗口的左上角的工具栏有两项，分别为“文件”和“帮助”。
-![alt text](image-3.png)![alt text](image-4.png)
+<p align="center">
+  <img src="Documentation/image-3.png" width="45%"; margin-right="10px" />
+  <img src="Documentation/image-4.png" width="45%"; margin-left="10px" />
+</p>
 用户可以在文件一栏中选择从本地路径打开新的图片，保存当前版本的图片和关闭窗口。用户在帮助一栏的“关于”中可以查看本项目的作者、版本信息和同步至github的网址，在“贴士和技巧”中查看对页面各按钮及功能的使用说明。
-![alt text](image-5.png)![alt text](image-6.png)
-
+<p align="center">
+    <img src="Documentation/image-5.png" width="45%"; margin-right="10px" />
+    <img src="Documentation/image-6.png" width="45%"; margin-left="10px" />
+</p>
 主窗口主体部分的左侧为显示图片的子窗口，右侧为工具栏。主窗口的左下角可以实时查看用户的鼠标当前或最后一次在左侧子窗口上停留的点的坐标值。右侧的工具栏分为三个模块，分别为设置图片大小、选中保护与删除和操作。
 在“设置图片大小”模块中，“宽度”栏和“高度”栏默认显示为原始图片的尺寸。用户可以在这两栏里输入想得到的图片尺寸数值，输入新的数字并回车后，程序便会计算并显示出处理后为该尺寸的图片。用户还可以直接点击或长按这两个输入栏右侧的上下箭头，一次箭头出发对应删除或增加一条缝，长按为连续变化。用户可以通过单次点击或长按“撤销”按钮来撤销对图片的上一步操作，通过单次点击或长按“重做”按钮来还原上一步撤销。
 
 “选中保护与删除”模块是套索功能的相关按钮。用户想在图片上画出套索区域，首先需要点击“套索工具”，会弹出介绍了使用方法的弹窗如下。
-![alt text](image-7.png)
+<p align="center">
+    <img src="Documentation/image-7.png" width=50% />
+</p>
 按鼠标左键绘制出的套索对应想要保护区域，显示为红色。按鼠标右键绘制出的套索对应想要删除的区域，显示为绿色。用户关闭弹窗后，“套索工具”按钮右侧的对勾会被程序自动勾选。这个对勾不被勾选时，用户无法绘制套索。用户点击“确定”按钮后，会弹出弹窗如下，此时已绘制出的区域会生效，并将作用于用户接下来在上一个模块中做的缩图和扩图操作。
-![alt text](image-8.png)
+<p align="center">
+    <img src="Documentation/image-8.png" width=50% />
+</p>
+
 而如果用户在没有先点击“套索工具”的前提下点击“确定”，会弹出提示弹窗如下，且不进行其他记录。
-![alt text](image-9.png)
+<p align="center">
+    <img src="Documentation/image-10.png" width=50% />
+</p>
 用户点击“取消区域”后，会弹出弹窗如下，之前生效的区域会变为无效，不会影响接下来对图片的处理。
-![alt text](image-10.png)
+<p align="center">
+    <img src="Documentation/image-11.png" width=50% />
+</p>
 在“操作”模块中，用户点击“保存”按钮可以保存当前版本的图像到本地，点击“还原”按钮可以一键让显示的图片变为刚打开时原始的版本。
-![alt text](image-11.png)
+<p align="center">
+    <img src="Documentation/image-12.png" width=50% />
+</p>
 ### 功能展示
 
 ### 套索部分
@@ -204,6 +224,7 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 ```
 ## 优化与总结
 
+### 优化
 1. 每次扩图和缩图后，更新能量图时，我们可以只更新`seam`附近的能量值，而不是整个能量图以减少计算量。
 2. 在撤销和重做操作中，我们可以只存储`seam`附近的像素点，而不是整个像素点数组以减少内存占用。
 3. 使用了cpu多线程来加速计算
@@ -233,5 +254,6 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
        }
    }
    ```
+### 总结
 
 ## 参考文献
