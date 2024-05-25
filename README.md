@@ -272,3 +272,4 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 ### 总结
 
 ## 参考文献
+Michael Rubinstein, Ariel Shamir, and Shai Avidan. 2008. Improved seam carving for video retargeting. ACM Trans. Graph. 27, 3 (August 2008), 1–9. https://doi.org/10.1145/1360612.1360615
