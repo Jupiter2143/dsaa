@@ -158,11 +158,6 @@ public class SeamCarver implements ISeamCarver {
       }
     seam[height - 1] = index;
     for (int y = height - 2; y >= 0; y--) seam[y] = seam[y + 1] + traceMatrix[y + 1][seam[y + 1]];
-    // print seam
-    System.out.println("seam.length = " + seam.length);
-    for (int i = 0; i < seam.length; i++) {
-      System.out.println("seam[" + i + "] = " + seam[i]);
-    }
     return seam;
   }
 
