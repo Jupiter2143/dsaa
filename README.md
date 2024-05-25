@@ -1,9 +1,12 @@
 # Seam-Carving算法实现，UI设计与优化
 
 ## 成员
-
+| 姓名 | 学号   |
+| 杨璐祯 | 12212755 |
+| 梁瑞健 | 12211812 |
+| 赵蕾悦 | 12212756 | 
 ## 介绍
-
+SeamCarver 是一种图像处理算法，用于内容感知缩放（Content-Aware Image Resizing）。其主要目的是在保持图像关键内容的前提下，智能地调整图像尺寸。该算法通过在图像中找到“无缝路径”（seams），并移除这些路径来缩小图像，或插入这些路径来放大图像。SeamCarver 由 Shai Avidan 和 Ariel Shamir 于2007年提出。本次project在实现SeamCarver基本算法基础上增加了UI设计与优化，最终实现了扩图、缩图、保护选中区域、删除选中区域、撤销、还原等功能。
 ## 后端计算
 
 ### 动态规划算法
@@ -152,6 +155,54 @@ else if (x >= seam[y]) newMask[y][x] = mask[y][x + 1];
 ![alt text](image-11.png)
 ### 功能展示
 
+### 套索部分
+#### 按钮设计
+首先为了用户良好体验，套索按键在监听用户点击后跳出对应说明窗口内容`“请在图像上用鼠标拖动进行选区，画出保护区域请用鼠标左键（显示为红色），画出消除区域请用鼠标右键（显示为绿色）”`，并开始使用`selectionToolActive`以及`selectionCheckBox.setSelected`进行内容判定。
+#### 具体实现
+```java
+private ArrayList<Point> highPriorityPoints = new ArrayList<>();
+private ArrayList<Point> lowPriorityPoints = new ArrayList<>();
+private boolean selectionToolActive = false;
+private JCheckBox selectionCheckBox = new JCheckBox();
+```
+由于我们希望套索能用鼠标左右键区分画出不同颜色的套索线，然后分别实现保护和消除功能，所以先建立两个链表用来存放保护像素点（`highPriorityPoints`），以及消除像素点（`lowPriorityPoints`）。`selectionToolActive`以及`selectionCheckBox`分别为套索启动判定和勾选显示。为了保证套索是在图片对应label上实施，我们先创建一个`ImageIcon`对象来显示图像，并将其设置为`JLabel`对象的图标。然后再创建一个`JLabel`对象，并写出其`paintComponent`方法以在图像上绘制多边形。绘制多边形我们选择构建`drawPolygon`函数，通过外界鼠标点击/拖动构成的像素点坐标链表，以及`Graphics2D`绘图画出有效多边形。
+```java
+private void drawPolygon(Graphics2D g2d, ArrayList<Point> points, Color color) {
+            int[] xPoints = new int[points.size()];
+            int[] yPoints = new int[points.size()];
+
+            for (int i = 0; i < points.size(); i++) {
+              Point point = points.get(i);
+              xPoints[i] = point.x;
+              yPoints[i] = point.y;
+            }
+
+            g2d.setColor(color);
+            g2d.drawPolygon(xPoints, yPoints, points.size());
+          }
+```
+同时为保证套索在页面放大时也能够正确采样，我们将图片左上角与页面左上角固定，保证套索采样坐标始终正确，不会根据窗口页面放大/缩小/全屏化而产生偏移而选取范围不正确。套索函数中我们将分出三种鼠标状态来构成完整过程：
+在按压鼠标（开始采样）时采用`SwingUtilities.isLeftMouseButton(e)`以及`SwingUtilities.isRightMouseButton(e)`进行左右键判定，若为左键则先清空`highPriorityPoints`再进行当前点击采样；若为右键则换成`lowPriorityPoints`进行操作。若此点击结束则进行`label.repaint()`重绘来获取新的采样点。
+在拖动鼠标（采样过程中）时进行上述左右键判定和点击点采样以及重绘获取新的点过程。
+在释放鼠标资源（结束采样）时同样进行上述左右键判定和点击点采样以及重绘获取新的点过程，此时由于是释放鼠标步骤，则可认为用户采集完毕，采用`seamCarver.setMask(calculateMask())`;更新`mask`矩阵。
+
+##### 套索采集点后进行mask矩阵计算
+```java
+ private void applyPriorityToMask(ArrayList<Point> points, float[][] mask, float value) {
+    if (points.size() < 3) return;
+    Polygon polygon = new Polygon();
+    for (Point point : points) polygon.addPoint(point.x, point.y);
+
+    for (int y = 0; y < mask.length; y++)
+      for (int x = 0; x < mask[0].length; x++) if (polygon.contains(x, y)) mask[y][x] = value;
+  }
+```
+创建`applyPriorityToMask`方法为后续`calculateMask()计`算做准备，在`applyPriorityToMask`里使用`Polygon`性质来判断链表内点坐标是否在多边形内部，若在则赋值。在`calculateMask`里则先初始化mask矩阵保证其大小与获取到的图片大小一致。然后运用以下两行代码使`mask`矩阵完整。`0`代表不做处理，`1e5`表示保护，`-1e4`表示优先删除
+```java
+applyPriorityToMask(highPriorityPoints, mask, 1e5f);
+applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
+```
 ## 优化与总结
+
 
 ## 参考文献
