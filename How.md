@@ -1,4 +1,4 @@
-# Compile the project and Run
+# Compile the project and Run by Using Makefile
 
 ## Prerequisites
 

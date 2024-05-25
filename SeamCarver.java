@@ -405,9 +405,7 @@ public class SeamCarver implements ISeamCarver {
   public void undo(boolean undo) {
     Stack<Integer> opStackFrom = undo ? undoStack : redoStack;
     Stack<Integer> opStackTo = undo ? redoStack : undoStack;
-    if (opStackFrom.isEmpty()) {
-      return;
-    }
+    if (opStackFrom.isEmpty()) return;
     Stack<int[]> seamsStacksFrom = undo ? undoSeamsStack : redoSeamsStack;
     Stack<int[]> pixelsStackFrom = undo ? undoPixelsStack : redoPixelsStack;
     Stack<int[]> seamsStacksTo = undo ? redoSeamsStack : undoSeamsStack;
@@ -419,14 +417,12 @@ public class SeamCarver implements ISeamCarver {
     splitFlag = false;
     int[] seam = seamsStacksFrom.pop();
     if (undo ^ add) {
-      // undo compress or redo strech: undo+XSUP or redo+XADD
-      // insert the seam
+      // undo compress or redo strech: undo+XSUP or redo+XADD, insert the pixels
       int[] pixels = pixelsStackFrom.pop();
       insertPixels(direct ? XADD : YADD, seam, pixels);
       seamsStacksTo.push(seam);
     } else {
-      // undo strech or redo compress: undo+XADD or redo+XSUB
-      // remove the seam
+      // undo strech or redo compress: undo+XADD or redo+XSUB, remove the pixels
       int[] pixels = removePixels(direct ? XSUB : YSUB, seam);
       seamsStacksTo.push(seam);
       pixelsStackTo.push(pixels);
@@ -439,14 +435,6 @@ public class SeamCarver implements ISeamCarver {
     this.mask = new float[height][width];
     for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) this.mask[y][x] = mask[y][x];
     maskFlag = true;
-
-    // for (int y = 0; y < height; y++) {
-    //   for (int x = 0; x < width; x++) {
-    //     if (mask[y][x] != 0) {
-    //       System.out.println("mask[" + y + "][" + x + "] = " + mask[y][x]);
-    //     }
-    //   }
-    // }
   }
 
   @Override
