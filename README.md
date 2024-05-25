@@ -284,7 +284,7 @@ applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
        }
    }
    ```
-## 总结
+### 总结
 本项目基于 SeamCarver 算法，实现了图像处理的一系列功能，并通过用户界面进行展示和交互。除了基本的图像缩放功能外，还增加了诸如扩图、保护选中区域、删除选中区域、撤销、还原等实用功能，以提升用户体验。通过将 SeamCarver 算法与用户界面设计和优化相结合，本项目为用户提供了一个功能丰富、操作简便的图像处理工具。未来，可以考虑进一步优化算法性能和扩展更多实用功能，以满足不同用户的需求。
 ## 参考文献
 Michael Rubinstein, Ariel Shamir, and Shai Avidan. 2008. Improved seam carving for video retargeting. ACM Trans. Graph. 27, 3 (August 2008), 1–9. https://doi.org/10.1145/1360612.1360615
