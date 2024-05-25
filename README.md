@@ -1,9 +1,12 @@
 # Seam-Carving算法实现，UI设计与优化
 
 ## 成员
-
+| 姓名 | 学号   |
+| 杨璐祯 | 12212755 |
+| 梁瑞健 | 12211812 |
+| 赵蕾悦 | 12212756 | 
 ## 介绍
-
+SeamCarver 是一种图像处理算法，用于内容感知缩放（Content-Aware Image Resizing）。其主要目的是在保持图像关键内容的前提下，智能地调整图像尺寸。该算法通过在图像中找到“无缝路径”（seams），并移除这些路径来缩小图像，或插入这些路径来放大图像。SeamCarver 由 Shai Avidan 和 Ariel Shamir 于2007年提出。本次project在实现SeamCarver基本算法基础上增加了UI设计与优化，最终实现了扩图、缩图、保护选中区域、删除选中区域、撤销、还原等功能。
 ## 后端计算
 
 ### 动态规划算法
@@ -197,5 +200,6 @@ applyPriorityToMask(highPriorityPoints, mask, 1e5f);
 applyPriorityToMask(lowPriorityPoints, mask, -1e4f);
 ```
 ## 优化与总结
+
 
 ## 参考文献
